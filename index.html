@@ -364,6 +364,24 @@ main {
     color: var(--primary);
 }
 
+/* Subheadings */
+.subheading {
+    background: linear-gradient(90deg, #FFE66D, #4ECDC4);
+    color: white;
+    padding: 8px 15px;
+    margin: 15px 0 5px 0;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.subheading-text {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
@@ -852,7 +870,9 @@ class CleaningApp {
         const roomData = this.tasks[roomName];
         const roomTasks = roomData.tasks;
         const baitsCount = roomData.baits || 0;
-        const completedCount = roomTasks.filter(task =>
+        // Exclude subheadings from completion count
+        const actualTasks = roomTasks.filter(task => !task.startsWith('---') || !task.endsWith('---'));
+        const completedCount = actualTasks.filter(task =>
             this.isTaskCompleted(`${roomName}-${task}`)
         ).length;
 
@@ -862,7 +882,7 @@ class CleaningApp {
             <div class="room-header">
                 <h3 class="room-title">${roomName}${baitInfo}</h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <span class="room-progress">${completedCount}/${roomTasks.length} completed</span>
+                    <span class="room-progress">${completedCount}/${actualTasks.length} completed</span>
                     <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editRoomName('${roomName}')">✏️ Edit Room</button>
                     <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.addTaskToRoom('${roomName}')">➕ Add Task</button>
                 </div>
@@ -878,6 +898,15 @@ class CleaningApp {
     createTaskElement(roomName, task) {
         const taskId = `${roomName}-${task}`;
         const isCompleted = this.isTaskCompleted(taskId);
+
+        // Check if this is a subheading (starts with ---)
+        if (task.startsWith('---') && task.endsWith('---')) {
+            return `
+                <div class="subheading">
+                    <span class="subheading-text">${task.replace(/---/g, '').trim()}</span>
+                </div>
+            `;
+        }
 
         return `
             <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${taskId}">
@@ -988,7 +1017,8 @@ class CleaningApp {
 
     // Progress tracking
     updateOverallProgress() {
-        const totalTasks = Object.values(this.tasks).reduce((sum, room) => sum + room.tasks.length, 0);
+        const totalTasks = Object.values(this.tasks).reduce((sum, room) =>
+            sum + room.tasks.filter(task => !task.startsWith('---') || !task.endsWith('---')).length, 0);
         const completedTasks = Object.keys(this.completedTasks).length;
         const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
