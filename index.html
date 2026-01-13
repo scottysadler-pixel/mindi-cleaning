@@ -863,6 +863,7 @@ class CleaningApp {
                 <h3 class="room-title">${roomName}${baitInfo}</h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <span class="room-progress">${completedCount}/${roomTasks.length} completed</span>
+                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editRoomName('${roomName}')">✏️ Edit Room</button>
                     <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.addTaskToRoom('${roomName}')">➕ Add Task</button>
                 </div>
             </div>
@@ -1148,6 +1149,51 @@ class CleaningApp {
             roomData.tasks.push(newTask.trim());
             this.saveTasks();
             this.renderRooms();
+        }
+    }
+
+    editRoomName(oldRoomName) {
+        const newRoomName = prompt('Rename room to:', oldRoomName);
+        if (newRoomName && newRoomName.trim() !== oldRoomName && newRoomName.trim()) {
+            const trimmedNewName = newRoomName.trim();
+
+            // Check if new name already exists
+            if (this.tasks[trimmedNewName]) {
+                alert('A room with this name already exists!');
+                return;
+            }
+
+            // Rename the room
+            this.tasks[trimmedNewName] = this.tasks[oldRoomName];
+            delete this.tasks[oldRoomName];
+
+            // Update completion data for tasks
+            const updatedCompletions = {};
+            Object.keys(this.completedTasks).forEach(taskId => {
+                if (taskId.startsWith(`${oldRoomName}-`)) {
+                    const newTaskId = taskId.replace(`${oldRoomName}-`, `${trimmedNewName}-`);
+                    updatedCompletions[newTaskId] = this.completedTasks[taskId];
+                } else {
+                    updatedCompletions[taskId] = this.completedTasks[taskId];
+                }
+            });
+            this.completedTasks = updatedCompletions;
+
+            // Update weekly tasks
+            this.weeklyTasks.forEach(task => {
+                if (task.room === oldRoomName) {
+                    task.room = trimmedNewName;
+                    task.id = `${trimmedNewName}-${task.task.replace(/\s+/g, '-').toLowerCase()}`;
+                }
+            });
+
+            this.saveTasks();
+            this.saveCompletedTasks();
+            this.saveWeeklyTasks();
+            this.renderRooms();
+            this.renderWeeklyTasks();
+            this.renderBaits();
+            this.updateOverallProgress();
         }
     }
 
