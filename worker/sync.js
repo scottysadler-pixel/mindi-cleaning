@@ -21,6 +21,7 @@ export default {
         weeklyTasks: null,
         taskMeta: {},
         roomMeta: {},
+        highFives: [],
       };
       await env.MINDI_SYNC.put(`state:${code}`, JSON.stringify(initial));
       return json({ code }, corsHeaders);
@@ -88,36 +89,45 @@ async function generateUniqueCode(kv) {
   throw new Error('Could not generate unique code');
 }
 
-function mergeState(local, remote) {
-  const mergedTaskMeta = mergeMetaMaps(local.taskMeta || {}, remote.taskMeta || {});
-  const mergedRoomMeta = mergeMetaMaps(local.roomMeta || {}, remote.roomMeta || {});
+function mergeState(local, incoming) {
+  const mergedTaskMeta = mergeMetaMaps(local.taskMeta || {}, incoming.taskMeta || {});
+  const mergedRoomMeta = mergeMetaMaps(local.roomMeta || {}, incoming.roomMeta || {});
+  const mergedHighFives = mergeHighFives(local.highFives || [], incoming.highFives || []);
 
   const tasks = mergeTasks(
     local.tasks,
-    remote.tasks,
+    incoming.tasks,
     mergedTaskMeta,
     mergedRoomMeta
   );
 
   const completedTasks = mergeCompletions(
     local.completedTasks || {},
-    remote.completedTasks || {}
+    incoming.completedTasks || {}
   );
 
   const weeklyTasks = mergeWeekly(
     local.weeklyTasks,
-    remote.weeklyTasks
+    incoming.weeklyTasks
   );
 
   return {
-    version: Math.max(local.version || 0, remote.version || 0) + 1,
+    version: Math.max(local.version || 0, incoming.version || 0) + 1,
     updatedAt: Date.now(),
     tasks,
     completedTasks,
     weeklyTasks,
     taskMeta: mergedTaskMeta,
     roomMeta: mergedRoomMeta,
+    highFives: mergedHighFives,
   };
+}
+
+function mergeHighFives(a, b) {
+  const ids = new Set([...a.map(h => h.id), ...b.map(h => h.id)]);
+  const map = new Map();
+  [...a, ...b].forEach(h => map.set(h.id, h));
+  return Array.from(ids).map(id => map.get(id)).sort((x, y) => x.at - y.at).slice(-50);
 }
 
 function mergeMetaMaps(a, b) {

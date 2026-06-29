@@ -455,6 +455,276 @@ main {
     letter-spacing: 1px;
 }
 
+/* Time-of-day gradient backgrounds */
+body.time-morning {
+    background: linear-gradient(135deg, #FFB6C1 0%, #FFD580 50%, #FF9A8B 100%);
+}
+body.time-midday {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+}
+body.time-evening {
+    background: linear-gradient(135deg, #614385 0%, #516395 50%, #2C3E50 100%);
+}
+body.time-night {
+    background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+    color: #ecf0f1;
+}
+body.time-night header,
+body.time-night main,
+body.time-night .nav-tabs {
+    background: rgba(40, 45, 60, 0.92);
+    color: #ecf0f1;
+}
+body.time-night .tab-button,
+body.time-night .progress-section h2,
+body.time-night .room-progress,
+body.time-night .sync-status,
+body.time-night .settings-section {
+    color: #bdc3c7;
+}
+body.time-night .task-item,
+body.time-night .settings-section {
+    background: rgba(50, 55, 70, 0.85);
+}
+body.time-night .room-section {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+body.time-night .task-text,
+body.time-night .room-title,
+body.time-night h2,
+body.time-night h3 {
+    color: #ecf0f1;
+}
+body.time-night .task-item.completed .task-text {
+    color: #95a5a6;
+}
+
+/* Streak badge */
+.streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(45deg, #FF6B9D, #FFA500);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-top: 12px;
+    box-shadow: 0 3px 10px rgba(255, 107, 157, 0.4);
+    animation: flameFlicker 2s ease-in-out infinite;
+}
+@keyframes flameFlicker {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}
+.streak-badge.zero {
+    background: linear-gradient(45deg, #95a5a6, #bdc3c7);
+    animation: none;
+    box-shadow: none;
+}
+
+/* Mindi avatar */
+.mindi-avatar {
+    font-size: 3rem;
+    display: inline-block;
+    animation: avatarBob 3s ease-in-out infinite;
+    transition: transform 0.3s ease;
+}
+.mindi-avatar.celebrate { animation: avatarCelebrate 0.8s ease-in-out; }
+.mindi-avatar.sleep { animation: avatarSleep 4s ease-in-out infinite; opacity: 0.7; }
+@keyframes avatarBob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(3deg); }
+}
+@keyframes avatarCelebrate {
+    0%, 100% { transform: scale(1) rotate(0); }
+    25% { transform: scale(1.3) rotate(-10deg); }
+    50% { transform: scale(1.2) rotate(10deg); }
+    75% { transform: scale(1.3) rotate(-5deg); }
+}
+@keyframes avatarSleep {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(2px) rotate(-2deg); }
+}
+
+/* Animated SVG checkbox */
+.task-check {
+    width: 28px;
+    height: 28px;
+    margin-right: 15px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.task-check .check-circle {
+    fill: white;
+    stroke: #d0d0d0;
+    stroke-width: 2;
+    transition: stroke 0.3s ease;
+}
+.task-check .check-path {
+    fill: none;
+    stroke: white;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+    transition: stroke-dashoffset 0.35s ease 0.05s;
+}
+.task-item.completed .task-check .check-circle {
+    fill: var(--success);
+    stroke: var(--success);
+}
+.task-item.completed .task-check .check-path {
+    stroke-dashoffset: 0;
+}
+.task-item.completed {
+    animation: checkBounce 0.4s ease;
+}
+@keyframes checkBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Today's mission card */
+.mission-card {
+    background: linear-gradient(135deg, #FFE66D 0%, #FFA07A 100%);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(255, 160, 122, 0.35);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.mission-card:active { transform: scale(0.98); }
+.mission-card .mission-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(80, 50, 30, 0.7);
+    margin-bottom: 6px;
+}
+.mission-card .mission-task {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2C3E50;
+    margin-bottom: 4px;
+}
+.mission-card .mission-room {
+    font-size: 0.95rem;
+    color: rgba(80, 50, 30, 0.85);
+}
+
+/* Weather widget */
+.weather-widget {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+.weather-widget .weather-icon { font-size: 1.6rem; }
+.weather-widget .weather-tip { font-style: italic; color: var(--text-secondary); }
+
+/* Pull-to-refresh */
+.pull-container { position: relative; }
+.pull-indicator {
+    text-align: center;
+    padding: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.2s ease;
+    opacity: 0;
+}
+.pull-indicator.visible { opacity: 1; }
+.pull-indicator.ready { color: var(--primary); font-weight: 600; }
+
+/* High-five toast */
+.highfive-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: linear-gradient(45deg, #FF6B9D, #4ECDC4);
+    color: white;
+    padding: 14px 22px;
+    border-radius: 30px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 1100;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 90vw;
+    text-align: center;
+}
+.highfive-toast.show { transform: translateX(-50%) translateY(0); }
+.highfive-toast .hf-emoji { font-size: 1.4rem; margin-right: 6px; }
+
+/* Celebration scene particles */
+.scene-particle {
+    position: fixed;
+    z-index: 1001;
+    pointer-events: none;
+    top: -30px;
+}
+@keyframes bubbleRise {
+    0% { transform: translateY(0) scale(0.5); opacity: 0.9; }
+    100% { transform: translateY(110vh) scale(1.3); opacity: 0; }
+}
+@keyframes leafFall {
+    0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(540deg) translateX(80px); opacity: 0; }
+}
+@keyframes sparkleBurst {
+    0% { transform: translateY(0) scale(0); opacity: 1; }
+    50% { transform: translateY(-50px) scale(1.4); opacity: 1; }
+    100% { transform: translateY(-120px) scale(0.6); opacity: 0; }
+}
+.scene-bubble {
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(173,216,230,0.6));
+    border: 1px solid rgba(255,255,255,0.7);
+    animation: bubbleRise 4s ease-in forwards;
+}
+.scene-leaf {
+    font-size: 1.6rem;
+    animation: leafFall 4s linear forwards;
+}
+.scene-sparkle {
+    font-size: 1.4rem;
+    animation: sparkleBurst 2.5s ease-out forwards;
+}
+
+/* Notification settings */
+.notif-permission-banner {
+    background: #FFF3CD;
+    color: #856404;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+/* Lock screen widget info */
+.widget-info-step {
+    background: #F0F4FF;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 8px 0;
+    font-size: 0.95rem;
+}
+.widget-info-step strong { color: var(--primary); }
+
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
@@ -500,7 +770,11 @@ main {
             <button type="button" id="dismissInstallHint">Got it</button>
         </div>
         <header>
+            <div class="mindi-avatar" id="mindiAvatar">🧹</div>
             <h1>🌟 Mindi's Cleaning Adventures 🌟</h1>
+            <div id="streakBadge" class="streak-badge zero" style="display: none;">
+                <span>🔥</span><span id="streakCount">0</span><span>week streak</span>
+            </div>
             <div class="progress-section">
                 <h2>Overall Progress</h2>
                 <div class="progress-bar">
@@ -520,6 +794,16 @@ main {
         <main>
             <div id="weeklyTab" class="tab-content active">
                 <h2>This Week's Suggested Tasks</h2>
+                <div id="weatherWidget" class="weather-widget" style="display: none;">
+                    <span class="weather-icon" id="weatherIcon">☀️</span>
+                    <span id="weatherText">Loading weather...</span>
+                    <span class="weather-tip" id="weatherTip"></span>
+                </div>
+                <div id="missionCard" class="mission-card" style="display: none;">
+                    <div class="mission-label">Today's Mission</div>
+                    <div class="mission-task" id="missionTask"></div>
+                    <div class="mission-room" id="missionRoom"></div>
+                </div>
                 <div class="progress-section" style="margin-bottom: 20px;">
                     <h3>Weekly Progress</h3>
                     <div class="progress-bar">
@@ -527,8 +811,11 @@ main {
                     </div>
                     <p id="weeklyProgressText" style="color: #4ECDC4; font-weight: bold;">Complete your weekly tasks!</p>
                 </div>
-                <div id="weeklyTasks" class="task-list">
-                    <!-- Weekly tasks will be populated here -->
+                <div class="pull-container">
+                    <div id="pullIndicator" class="pull-indicator">Pull down to refresh</div>
+                    <div id="weeklyTasks" class="task-list">
+                        <!-- Weekly tasks will be populated here -->
+                    </div>
                 </div>
                 <button id="refreshWeekly" class="refresh-btn">🎲 Get New Weekly Tasks</button>
             </div>
@@ -581,6 +868,27 @@ main {
                     <p id="syncStatus" class="sync-status">Not synced</p>
                 </div>
                 <div class="settings-section">
+                    <h3>Notifications</h3>
+                    <div id="notifPermissionBanner" class="notif-permission-banner" style="display: none;">
+                        Enable notifications for monthly recaps and streak reminders.
+                        <button id="enableNotifs" class="action-btn" style="font-size: 0.8rem; padding: 4px 10px; margin-left: 8px;">Enable</button>
+                    </div>
+                    <p id="notifStatus" style="font-size: 0.9rem; color: var(--text-secondary);"></p>
+                    <div class="sync-actions">
+                        <button id="testNotif" class="action-btn">Test Notification</button>
+                        <button id="showRecap" class="action-btn">View Monthly Recap</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Lock Screen Widget (iOS)</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">Add a cleaning progress widget to your iPhone lock screen using the Shortcuts app:</p>
+                    <div class="widget-info-step"><strong>1.</strong> Open the <strong>Shortcuts</strong> app on iPhone</div>
+                    <div class="widget-info-step"><strong>2.</strong> Tap <strong>+</strong> → search <strong>Safari</strong> → "Open URL"</div>
+                    <div class="widget-info-step"><strong>3.</strong> Set URL to: <code>https://scottysadler-pixel.github.io/mindi-cleaning/</code></div>
+                    <div class="widget-info-step"><strong>4.</strong> Save as "Open Mindi". Long-press lock screen → <strong>Add Widgets</strong> → pick <strong>Shortcuts</strong> widget → choose "Open Mindi"</div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">Now you can jump straight into the app from your lock screen with one tap.</p>
+                </div>
+                <div class="settings-section">
                     <h3>Backup</h3>
                     <div class="sync-actions">
                         <button id="exportData" class="action-btn">Export JSON</button>
@@ -610,6 +918,14 @@ main {
     <script>
 // Cloudflare Worker URL — update after running `npx wrangler deploy` in the worker/ folder
 const SYNC_API_URL = 'https://mindi-cleaning-sync.mindi-clean.workers.dev';
+
+// Haptic feedback helper (no-op on devices without vibration support)
+const Haptics = {
+    light() { if (navigator.vibrate) navigator.vibrate(10); },
+    medium() { if (navigator.vibrate) navigator.vibrate(20); },
+    heavy() { if (navigator.vibrate) navigator.vibrate([20, 30, 40]); },
+    success() { if (navigator.vibrate) navigator.vibrate([10, 40, 20, 40, 60]); },
+};
 
 // IndexedDB key-value storage (replaces localStorage for iOS standalone reliability)
 const Storage = {
@@ -851,18 +1167,32 @@ class CleaningApp {
         this.weeklyTasks = await this.loadWeeklyTasks();
         this.taskMeta = (await Storage.get('taskMeta')) || {};
         this.roomMeta = (await Storage.get('roomMeta')) || {};
+        this.streak = (await Storage.get('streak')) || { count: 0, lastWeek: null };
+        this.highFivesSeen = (await Storage.get('highFivesSeen')) || [];
+        this.highFives = (await Storage.get('highFives')) || [];
+        this.lastRecapMonth = (await Storage.get('lastRecapMonth')) || null;
         this.ensureRoomTimestamps();
 
         this.syncClient = new SyncClient(this);
         this.setupEventListeners();
+        this.applyTimeOfDay();
+        this.startAvatarWatcher();
         this.renderRooms();
         this.renderWeeklyTasks();
         this.renderBaits();
+        this.renderMission();
         this.updateOverallProgress();
         this.updateWeeklyProgress();
+        this.updateStreakBadge();
+        this.updateAvatar();
         this.showWelcomeMessage();
         this.setupIosInstallHint();
+        this.setupNotifications();
+        this.setupPullToRefresh();
+        this.loadWeather();
+        this.maybeShowMonthlyRecap();
         await this.syncClient.init();
+        setInterval(() => this.applyTimeOfDay(), 60 * 1000);
     }
 
     ensureRoomTimestamps() {
@@ -901,6 +1231,7 @@ class CleaningApp {
             },
             taskMeta: this.taskMeta,
             roomMeta: this.roomMeta,
+            highFives: this.highFives || [],
         };
     }
 
@@ -909,11 +1240,14 @@ class CleaningApp {
         const local = this.getSyncState();
         const merged = this.mergeStates(local, remote);
         this.applySyncState(merged, { skipPush: true, skipRender: true });
+        // Detect any high-fives from the other device
+        this.checkIncomingHighFives(remote);
     }
 
     mergeStates(local, remote) {
         const mergedTaskMeta = this.mergeMetaMaps(local.taskMeta || {}, remote.taskMeta || {});
         const mergedRoomMeta = this.mergeMetaMaps(local.roomMeta || {}, remote.roomMeta || {});
+        const mergedHighFives = this.mergeHighFives(local.highFives || [], remote.highFives || []);
 
         return {
             version: Math.max(local.version || 0, remote.version || 0) + 1,
@@ -923,7 +1257,15 @@ class CleaningApp {
             weeklyTasks: this.mergeWeeklyData(local.weeklyTasks, remote.weeklyTasks),
             taskMeta: mergedTaskMeta,
             roomMeta: mergedRoomMeta,
+            highFives: mergedHighFives,
         };
+    }
+
+    mergeHighFives(a, b) {
+        const ids = new Set([...a.map(h => h.id), ...b.map(h => h.id)]);
+        const map = new Map();
+        [...a, ...b].forEach(h => map.set(h.id, h));
+        return Array.from(ids).map(id => map.get(id)).sort((x, y) => x.at - y.at).slice(-50);
     }
 
     mergeMetaMaps(a, b) {
@@ -1018,6 +1360,7 @@ class CleaningApp {
         if (state.completedTasks) this.completedTasks = state.completedTasks;
         if (state.taskMeta) this.taskMeta = state.taskMeta;
         if (state.roomMeta) this.roomMeta = state.roomMeta;
+        if (state.highFives) this.highFives = state.highFives;
         if (state.weeklyTasks) {
             const w = state.weeklyTasks;
             if (w.week === this.currentWeek || !w.week) {
@@ -1030,8 +1373,11 @@ class CleaningApp {
             this.renderRooms();
             this.renderWeeklyTasks();
             this.renderBaits();
+            this.renderMission();
             this.updateOverallProgress();
             this.updateWeeklyProgress();
+            this.updateStreakBadge();
+            this.updateAvatar();
         }
     }
 
@@ -1066,6 +1412,7 @@ class CleaningApp {
         });
         Storage.set('taskMeta', this.taskMeta);
         Storage.set('roomMeta', this.roomMeta);
+        Storage.set('highFives', this.highFives || []);
         if (!skipPush && this.syncClient) {
             this.syncClient.scheduleSync();
         }
@@ -1204,6 +1551,11 @@ class CleaningApp {
         });
         document.getElementById('importFileInput').addEventListener('change', (e) => this.importData(e));
 
+        document.getElementById('missionCard').addEventListener('click', () => this.openMission());
+        document.getElementById('enableNotifs').addEventListener('click', () => this.enableNotifications());
+        document.getElementById('testNotif').addEventListener('click', () => this.sendTestNotification());
+        document.getElementById('showRecap').addEventListener('click', () => this.showMonthlyRecap(true));
+
         document.querySelector('.close-modal').addEventListener('click', () => this.closeModal());
         document.getElementById('congratsModal').addEventListener('click', (e) => {
             if (e.target.id === 'congratsModal') this.closeModal();
@@ -1306,7 +1658,10 @@ class CleaningApp {
 
         return `
             <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${taskId}">
-                <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''}>
+                <svg class="task-check" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="check-circle" cx="16" cy="16" r="14"></circle>
+                    <path class="check-path" d="M9 16 L14 21 L23 11"></path>
+                </svg>
                 <span class="task-text">${task}</span>
                 <div class="task-actions">
                     <button class="edit-btn" title="Edit task" onclick="cleaningApp.editTask('${roomName.replace(/'/g, "\\'")}', '${safeTask}')">✏️</button>
@@ -1336,7 +1691,10 @@ class CleaningApp {
                     </div>
                     <div class="task-list">
                         <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${baitId}">
-                            <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''}>
+                            <svg class="task-check" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                <circle class="check-circle" cx="16" cy="16" r="14"></circle>
+                                <path class="check-path" d="M9 16 L14 21 L23 11"></path>
+                            </svg>
                             <span class="task-text">Change baits</span>
                         </div>
                     </div>
@@ -1361,7 +1719,10 @@ class CleaningApp {
             taskElement.dataset.taskId = weeklyTask.id;
             const isCompleted = this.isTaskCompleted(weeklyTask.id);
             taskElement.innerHTML = `
-                <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''} data-task-id="${weeklyTask.id}">
+                <svg class="task-check" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="check-circle" cx="16" cy="16" r="14"></circle>
+                    <path class="check-path" d="M9 16 L14 21 L23 11"></path>
+                </svg>
                 <span class="task-text"><strong>${weeklyTask.room}:</strong> ${weeklyTask.task}</span>
             `;
             if (isCompleted) taskElement.classList.add('completed');
@@ -1370,10 +1731,15 @@ class CleaningApp {
     }
 
     toggleTaskCompletion(taskId) {
-        if (this.completedTasks[taskId]) {
+        const wasCompleted = !!this.completedTasks[taskId];
+        if (wasCompleted) {
             delete this.completedTasks[taskId];
+            Haptics.light();
         } else {
             this.completedTasks[taskId] = new Date().toISOString();
+            Haptics.medium();
+            this.maybeFireHighFive(taskId);
+            this.maybeFireCelebrationScene(taskId);
         }
         this.saveCompletedTasks();
         this.updateOverallProgress();
@@ -1381,11 +1747,39 @@ class CleaningApp {
         this.renderRooms();
         this.renderWeeklyTasks();
         this.renderBaits();
+        this.updateAvatar();
+        this.renderMission();
+        this.updateStreakBadge();
+
+        if (!wasCompleted) {
+            const room = this.detectRoomFromTaskId(taskId);
+            if (room && this.isRoomComplete(room)) {
+                Haptics.heavy();
+                this.flashAvatar();
+            }
+        }
 
         const weeklyCompleted = this.weeklyTasks.every(task => this.isTaskCompleted(task.id));
-        if (weeklyCompleted && this.weeklyTasks.length > 0) {
+        if (weeklyCompleted && this.weeklyTasks.length > 0 && !wasCompleted) {
+            Haptics.success();
             this.showCongratulations();
+            this.bumpStreak();
         }
+    }
+
+    detectRoomFromTaskId(taskId) {
+        if (taskId.startsWith('bait-')) return taskId.slice(5);
+        for (const room of Object.keys(this.tasks)) {
+            if (taskId.startsWith(`${room}-`)) return room;
+        }
+        return null;
+    }
+
+    isRoomComplete(room) {
+        const data = this.tasks[room];
+        if (!data) return false;
+        const actual = data.tasks.filter(t => !(t.startsWith('---') && t.endsWith('---')));
+        return actual.length > 0 && actual.every(t => this.isTaskCompleted(`${room}-${t}`));
     }
 
     isTaskCompleted(taskId) {
@@ -1634,6 +2028,8 @@ class CleaningApp {
         `;
         document.getElementById('congratsModal').style.display = 'block';
         this.createConfetti();
+        this.spawnSparkles(30);
+        this.flashAvatar();
     }
 
     closeModal() {
@@ -1698,6 +2094,471 @@ class CleaningApp {
             }, 1000);
         }
     }
+
+    // ---- Haptics ----
+    // (handled by Haptics global; called from toggleTaskCompletion)
+
+    // ---- Time-of-day gradient ----
+    applyTimeOfDay() {
+        const h = new Date().getHours();
+        let cls = 'time-midday';
+        if (h >= 5 && h < 11) cls = 'time-morning';
+        else if (h >= 11 && h < 17) cls = 'time-midday';
+        else if (h >= 17 && h < 21) cls = 'time-evening';
+        else cls = 'time-night';
+        document.body.classList.remove('time-morning', 'time-midday', 'time-evening', 'time-night');
+        document.body.classList.add(cls);
+        const themeColor = cls === 'time-night' ? '#0F2027' : cls === 'time-evening' ? '#614385' : cls === 'time-morning' ? '#FFB6C1' : '#667EEA';
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
+    }
+
+    // ---- Avatar ----
+    updateAvatar() {
+        const avatar = document.getElementById('mindiAvatar');
+        if (!avatar) return;
+        const totalComplete = Object.keys(this.completedTasks).length;
+        const today = new Date().toDateString();
+        const completedToday = Object.values(this.completedTasks).filter(v => {
+            const ts = typeof v === 'string' ? v : v.completedAt;
+            return new Date(ts).toDateString() === today;
+        }).length;
+
+        if (completedToday >= 5) avatar.textContent = '🤩';
+        else if (completedToday > 0) avatar.textContent = '😊';
+        else if (totalComplete === 0) avatar.textContent = '🧹';
+        else avatar.textContent = '🙂';
+    }
+
+    flashAvatar() {
+        const avatar = document.getElementById('mindiAvatar');
+        if (!avatar) return;
+        avatar.classList.remove('celebrate');
+        void avatar.offsetWidth;
+        avatar.classList.add('celebrate');
+        setTimeout(() => avatar.classList.remove('celebrate'), 800);
+    }
+
+    startAvatarWatcher() {
+        // Sleepy avatar if no activity in 3 days
+        setInterval(() => {
+            const all = Object.values(this.completedTasks).map(v => typeof v === 'string' ? Date.parse(v) : (v.completedAt || 0));
+            const latest = all.length ? Math.max(...all) : 0;
+            const daysSince = (Date.now() - latest) / (1000 * 60 * 60 * 24);
+            const avatar = document.getElementById('mindiAvatar');
+            if (!avatar) return;
+            if (daysSince > 3 && !avatar.classList.contains('celebrate')) {
+                avatar.classList.add('sleep');
+                avatar.textContent = '😴';
+            } else {
+                avatar.classList.remove('sleep');
+            }
+        }, 60 * 1000);
+    }
+
+    // ---- Streak ----
+    updateStreakBadge() {
+        const badge = document.getElementById('streakBadge');
+        const count = document.getElementById('streakCount');
+        if (!badge || !count) return;
+        const c = this.streak?.count || 0;
+        count.textContent = c;
+        badge.style.display = 'inline-flex';
+        badge.classList.toggle('zero', c === 0);
+    }
+
+    bumpStreak() {
+        const week = this.currentWeek;
+        if (this.streak?.lastWeek === week) return;
+        const prevWeek = week - 1;
+        const count = this.streak?.lastWeek === prevWeek ? (this.streak.count || 0) + 1 : 1;
+        this.streak = { count, lastWeek: week };
+        Storage.set('streak', this.streak);
+        this.updateStreakBadge();
+    }
+
+    // ---- Today's mission ----
+    renderMission() {
+        const card = document.getElementById('missionCard');
+        const taskEl = document.getElementById('missionTask');
+        const roomEl = document.getElementById('missionRoom');
+        if (!card) return;
+
+        const candidates = [];
+        Object.keys(this.tasks).forEach(room => {
+            const data = this.tasks[room];
+            data.tasks.forEach(task => {
+                if (task.startsWith('---') && task.endsWith('---')) return;
+                const id = `${room}-${task}`;
+                if (this.isTaskCompleted(id)) return;
+                const completedAt = this.completedTasks[id];
+                const lastDone = completedAt ? Date.parse(completedAt) : 0;
+                candidates.push({ room, task, id, lastDone });
+            });
+        });
+
+        if (candidates.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+
+        candidates.sort((a, b) => a.lastDone - b.lastDone);
+        const mission = candidates[0];
+        card.style.display = 'block';
+        taskEl.textContent = mission.task;
+        roomEl.textContent = `in ${mission.room}`;
+        this._currentMission = mission;
+    }
+
+    openMission() {
+        if (!this._currentMission) return;
+        this.switchTab('rooms');
+        setTimeout(() => {
+            const el = document.querySelector(`[data-task-id="${CSS.escape(this._currentMission.id)}"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.transition = 'box-shadow 0.4s ease';
+                el.style.boxShadow = '0 0 0 4px #FFE66D';
+                setTimeout(() => el.style.boxShadow = '', 1800);
+            }
+        }, 300);
+    }
+
+    // ---- Weather ----
+    async loadWeather() {
+        const widget = document.getElementById('weatherWidget');
+        if (!widget) return;
+        if (!navigator.geolocation) { widget.style.display = 'none'; return; }
+
+        const cached = await Storage.get('weatherCache');
+        if (cached && Date.now() - cached.at < 30 * 60 * 1000) {
+            this.renderWeather(cached);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            try {
+                const { latitude, longitude } = pos.coords;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
+                const res = await fetch(url);
+                const data = await res.json();
+                const cache = {
+                    at: Date.now(),
+                    temp: Math.round(data.current.temperature_2m),
+                    code: data.current.weather_code,
+                };
+                await Storage.set('weatherCache', cache);
+                this.renderWeather(cache);
+            } catch {
+                widget.style.display = 'none';
+            }
+        }, () => { widget.style.display = 'none'; },
+            { timeout: 8000, maximumAge: 10 * 60 * 1000 });
+    }
+
+    renderWeather(w) {
+        const widget = document.getElementById('weatherWidget');
+        const icon = document.getElementById('weatherIcon');
+        const text = document.getElementById('weatherText');
+        const tip = document.getElementById('weatherTip');
+        const { emoji, label, suggestion } = this.weatherInfo(w.code);
+        icon.textContent = emoji;
+        text.textContent = `${w.temp}°C, ${label}`;
+        tip.textContent = `— ${suggestion}`;
+        widget.style.display = 'flex';
+    }
+
+    weatherInfo(code) {
+        if (code === 0) return { emoji: '☀️', label: 'Clear', suggestion: 'Sunny day — maybe tackle the deck today?' };
+        if (code <= 3) return { emoji: '⛅', label: 'Partly cloudy', suggestion: 'Nice day for any task!' };
+        if (code >= 45 && code <= 48) return { emoji: '🌫️', label: 'Foggy', suggestion: 'Cozy inside day — perfect for dusting.' };
+        if (code >= 51 && code <= 67) return { emoji: '🌧️', label: 'Rainy', suggestion: 'Rainy — perfect time to clean inside today!' };
+        if (code >= 71 && code <= 77) return { emoji: '❄️', label: 'Snowy', suggestion: 'Stay warm — focus on indoor rooms.' };
+        if (code >= 80 && code <= 82) return { emoji: '🌧️', label: 'Showers', suggestion: 'Showers outside — great time to clean inside.' };
+        if (code >= 95) return { emoji: '⛈️', label: 'Stormy', suggestion: 'Stormy — perfect excuse to tackle the kitchen.' };
+        return { emoji: '🌤️', label: 'Mild', suggestion: 'A great day to make progress.' };
+    }
+
+    // ---- High-five ----
+    maybeFireHighFive(taskId) {
+        if (!this.syncClient?.householdCode) return;
+        const room = this.detectRoomFromTaskId(taskId);
+        const task = taskId.startsWith('bait-') ? 'Change baits' : taskId.slice(room.length + 1);
+        this.highFives = this.highFives || [];
+        this.highFives.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            taskId,
+            room,
+            task,
+            at: Date.now(),
+            by: this.deviceName(),
+        });
+        if (this.highFives.length > 20) this.highFives = this.highFives.slice(-20);
+        Storage.set('highFives', this.highFives);
+    }
+
+    deviceName() {
+        if (/iPad/.test(navigator.userAgent)) return 'iPad';
+        if (/iPhone/.test(navigator.userAgent)) return 'iPhone';
+        return 'This device';
+    }
+
+    checkIncomingHighFives(remoteState) {
+        const remote = remoteState?.highFives || [];
+        const seen = new Set(this.highFivesSeen);
+        const myIds = new Set((this.highFives || []).map(h => h.id));
+        const newOnes = remote.filter(h => !seen.has(h.id) && !myIds.has(h.id));
+        newOnes.forEach(h => {
+            this.showHighFiveToast(h);
+            this.highFivesSeen.push(h.id);
+        });
+        if (newOnes.length) {
+            this.highFivesSeen = this.highFivesSeen.slice(-50);
+            Storage.set('highFivesSeen', this.highFivesSeen);
+        }
+    }
+
+    showHighFiveToast(highFive) {
+        let toast = document.querySelector('.highfive-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'highfive-toast';
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = `<span class="hf-emoji">👋</span>${highFive.by} just did <strong>${highFive.task}</strong> in ${highFive.room}!`;
+        toast.classList.add('show');
+        Haptics.medium();
+        clearTimeout(this._hfTimer);
+        this._hfTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // ---- Themed celebration scenes ----
+    maybeFireCelebrationScene(taskId) {
+        const room = this.detectRoomFromTaskId(taskId);
+        if (!room) return;
+        const theme = this.celebrationThemeForRoom(room);
+        if (theme === 'confetti') return; // default confetti already fires elsewhere
+        if (theme === 'bubbles') this.spawnBubbles(15);
+        else if (theme === 'leaves') this.spawnLeaves(12);
+        else if (theme === 'sparkles') this.spawnSparkles(20);
+    }
+
+    celebrationThemeForRoom(room) {
+        const r = room.toLowerCase();
+        if (r.includes('bath') || r.includes('toilet') || r.includes('ensuite')) return 'bubbles';
+        if (r.includes('outside') || r.includes('deck') || r.includes('courtyard') || r.includes('entry')) return 'leaves';
+        if (r.includes('kitchen') || r.includes('dining') || r.includes('sewing')) return 'sparkles';
+        return 'confetti';
+    }
+
+    spawnBubbles(n) {
+        for (let i = 0; i < n; i++) {
+            const b = document.createElement('div');
+            b.className = 'scene-particle scene-bubble';
+            const size = 12 + Math.random() * 28;
+            b.style.width = b.style.height = size + 'px';
+            b.style.left = (Math.random() * 100) + '%';
+            b.style.animationDelay = (Math.random() * 0.8) + 's';
+            document.body.appendChild(b);
+            setTimeout(() => b.remove(), 4500);
+        }
+    }
+
+    spawnLeaves(n) {
+        const leaves = ['🍃', '🌿', '🍂'];
+        for (let i = 0; i < n; i++) {
+            const l = document.createElement('div');
+            l.className = 'scene-particle scene-leaf';
+            l.textContent = leaves[Math.floor(Math.random() * leaves.length)];
+            l.style.left = (Math.random() * 100) + '%';
+            l.style.animationDelay = (Math.random() * 1.2) + 's';
+            document.body.appendChild(l);
+            setTimeout(() => l.remove(), 5500);
+        }
+    }
+
+    spawnSparkles(n) {
+        const sparkles = ['✨', '⭐', '💫', '🌟'];
+        for (let i = 0; i < n; i++) {
+            const s = document.createElement('div');
+            s.className = 'scene-particle scene-sparkle';
+            s.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+            s.style.left = (Math.random() * 100) + '%';
+            s.style.top = (40 + Math.random() * 30) + '%';
+            s.style.animationDelay = (Math.random() * 0.5) + 's';
+            document.body.appendChild(s);
+            setTimeout(() => s.remove(), 3000);
+        }
+    }
+
+    // ---- Notifications ----
+    async setupNotifications() {
+        const banner = document.getElementById('notifPermissionBanner');
+        const status = document.getElementById('notifStatus');
+        if (!('Notification' in window)) {
+            banner.style.display = 'none';
+            status.textContent = 'Notifications not supported on this device.';
+            return;
+        }
+        if (Notification.permission === 'granted') {
+            banner.style.display = 'none';
+            status.textContent = 'Notifications enabled. Monthly recaps will appear automatically.';
+        } else if (Notification.permission === 'denied') {
+            banner.style.display = 'none';
+            status.textContent = 'Notifications blocked. Enable in Settings to get monthly recaps.';
+        } else {
+            banner.style.display = 'block';
+            status.textContent = '';
+        }
+    }
+
+    async enableNotifications() {
+        if (!('Notification' in window)) return;
+        const perm = await Notification.requestPermission();
+        this.setupNotifications();
+        if (perm === 'granted') this.sendTestNotification();
+    }
+
+    sendTestNotification() {
+        if (!('Notification' in window) || Notification.permission !== 'granted') {
+            alert('Enable notifications first using the Enable button.');
+            return;
+        }
+        const title = "Mindi's Cleaning 🧹";
+        const body = "Notifications are working! You'll get a monthly recap on the 1st.";
+        try {
+            navigator.serviceWorker?.ready.then(reg => {
+                reg.showNotification(title, {
+                    body,
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                });
+            }).catch(() => {
+                new Notification(title, { body });
+            });
+        } catch {
+            new Notification(title, { body });
+        }
+    }
+
+    async maybeShowMonthlyRecap() {
+        const now = new Date();
+        const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+        if (this.lastRecapMonth === monthKey) return;
+        if (now.getDate() < 1) return;
+        // Show on first launch of a new month (any day)
+        const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const monthName = prev.toLocaleString('default', { month: 'long' });
+        const counts = this.computeMonthlyStats(prev);
+        if (counts.total === 0) return;
+
+        await Storage.set('lastRecapMonth', monthKey);
+        this.lastRecapMonth = monthKey;
+
+        if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker?.controller) {
+            navigator.serviceWorker?.ready.then(reg => {
+                reg.showNotification(`Monthly recap: ${monthName} 🌟`, {
+                    body: `You completed ${counts.total} tasks across ${counts.rooms} rooms! Tap to view more.`,
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                });
+            });
+        }
+        // Also show in-app recap once per month
+        setTimeout(() => this.showMonthlyRecap(false, monthName, counts), 2000);
+    }
+
+    computeMonthlyStats(monthDate) {
+        const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).getTime();
+        const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1).getTime();
+        const rooms = new Set();
+        let total = 0;
+        Object.entries(this.completedTasks).forEach(([id, v]) => {
+            const ts = typeof v === 'string' ? Date.parse(v) : (v.completedAt || 0);
+            if (ts >= start && ts < end) {
+                total++;
+                if (id.startsWith('bait-')) rooms.add(id.slice(5));
+                else {
+                    for (const room of Object.keys(this.tasks)) {
+                        if (id.startsWith(`${room}-`)) { rooms.add(room); break; }
+                    }
+                }
+            }
+        });
+        return { total, rooms: rooms.size };
+    }
+
+    showMonthlyRecap(force, monthName, counts) {
+        const prev = new Date();
+        prev.setMonth(prev.getMonth() - 1);
+        const name = monthName || prev.toLocaleString('default', { month: 'long' });
+        const stats = counts || this.computeMonthlyStats(prev);
+        const modal = document.getElementById('congratsModal');
+        const content = document.getElementById('congratsContent');
+        content.innerHTML = `
+            <h2>📜 ${name} Recap</h2>
+            <p style="font-size: 1.2rem; margin: 15px 0;">You completed <strong>${stats.total}</strong> cleaning tasks across <strong>${stats.rooms}</strong> rooms! 🎉</p>
+            <div style="font-size: 3.5rem; margin: 20px 0;">🌟🧹✨</div>
+            <p style="font-weight: bold; color: var(--primary);">${stats.total >= 30 ? 'Outstanding month!' : stats.total >= 15 ? 'Great month!' : 'Every task counts!'}</p>
+        `;
+        modal.style.display = 'block';
+        if (force) this.spawnSparkles(20);
+    }
+
+    // ---- Pull-to-refresh ----
+    setupPullToRefresh() {
+        const container = document.querySelector('.pull-container');
+        const indicator = document.getElementById('pullIndicator');
+        if (!container || !indicator) return;
+
+        let startY = 0;
+        let pulling = false;
+        let currentDelta = 0;
+        const threshold = 70;
+
+        container.addEventListener('touchstart', (e) => {
+            if (window.scrollY > 0) return;
+            startY = e.touches[0].clientY;
+            pulling = true;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!pulling) return;
+            currentDelta = Math.max(0, e.touches[0].clientY - startY);
+            if (currentDelta > 0) {
+                indicator.style.height = Math.min(60, currentDelta) + 'px';
+                indicator.classList.add('visible');
+                indicator.classList.toggle('ready', currentDelta >= threshold);
+                indicator.textContent = currentDelta >= threshold ? 'Release to refresh' : 'Pull down to refresh';
+            }
+        }, { passive: true });
+
+        const finish = () => {
+            if (!pulling) return;
+            pulling = false;
+            const wasReady = currentDelta >= threshold;
+            indicator.style.height = '0';
+            indicator.classList.remove('visible', 'ready');
+            currentDelta = 0;
+            if (wasReady) {
+                indicator.textContent = 'Refreshing...';
+                indicator.style.height = '30px';
+                indicator.classList.add('visible');
+                Haptics.light();
+                setTimeout(async () => {
+                    if (this.syncClient?.householdCode) {
+                        await this.syncClient.sync();
+                    }
+                    this.renderWeeklyTasks();
+                    this.renderMission();
+                    indicator.style.height = '0';
+                    indicator.classList.remove('visible');
+                }, 600);
+            }
+        };
+
+        container.addEventListener('touchend', finish);
+        container.addEventListener('touchcancel', finish);
+    }
 }
 
 let cleaningApp;
@@ -1713,9 +2574,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('task-checkbox')) {
-        const taskItem = e.target.closest('.task-item');
+document.addEventListener('click', (e) => {
+    const check = e.target.closest('.task-check');
+    if (check) {
+        const taskItem = check.closest('.task-item');
         const taskId = taskItem?.dataset?.taskId;
         if (taskId && window.cleaningApp) {
             window.cleaningApp.toggleTaskCompletion(taskId);

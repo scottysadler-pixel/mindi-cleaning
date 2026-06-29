@@ -4,4 +4,4 @@ compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "MINDI_SYNC"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "e3e404fb996f4142a791ee797c3c8d0c"
