@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Mindi's Cleaning Checklist</title>
 
     <!-- PWA Manifest and Icons -->
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Mindi's Cleaning">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <style>
@@ -41,12 +41,85 @@ body {
     min-height: 100vh;
     color: var(--text-primary);
     line-height: 1.6;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+}
+
+.ios-install-hint {
+    display: none;
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    box-shadow: var(--shadow);
+}
+
+.ios-install-hint.visible {
+    display: block;
+}
+
+.ios-install-hint button {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-left: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sync-status {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 10px;
+}
+
+.sync-status.synced {
+    color: var(--success);
+}
+
+.sync-status.error {
+    color: #e74c3c;
+}
+
+.sync-code-display {
+    font-size: 1.8rem;
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: var(--primary);
+    margin: 10px 0;
+    font-family: monospace;
+}
+
+.sync-input {
+    width: 100%;
+    max-width: 200px;
+    padding: 10px;
+    margin: 10px 8px 10px 0;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: monospace;
+}
+
+.sync-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 /* Header */
@@ -422,6 +495,10 @@ main {
 </head>
 <body>
     <div class="container">
+        <div id="iosInstallHint" class="ios-install-hint">
+            Install on your iPhone: tap <strong>Share</strong> then <strong>Add to Home Screen</strong>.
+            <button type="button" id="dismissInstallHint">Got it</button>
+        </div>
         <header>
             <h1>🌟 Mindi's Cleaning Adventures 🌟</h1>
             <div class="progress-section">
@@ -484,6 +561,34 @@ main {
                     </div>
                 </div>
                 <div class="settings-section">
+                    <h3>Device Sync</h3>
+                    <p style="margin-bottom: 10px; color: var(--text-secondary);">Keep iPhone and iPad in sync with a shared household code.</p>
+                    <div id="syncNotConfigured">
+                        <div class="sync-actions">
+                            <button id="createHousehold" class="action-btn">Create Household</button>
+                            <input type="text" id="joinCodeInput" class="sync-input" maxlength="6" placeholder="CODE" autocomplete="off">
+                            <button id="joinHousehold" class="action-btn">Join Household</button>
+                        </div>
+                    </div>
+                    <div id="syncConfigured" style="display: none;">
+                        <p>Household code: <span id="householdCodeDisplay" class="sync-code-display"></span></p>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Share this code with your other device, then tap Join on that device.</p>
+                        <div class="sync-actions">
+                            <button id="syncNow" class="action-btn">Sync Now</button>
+                            <button id="leaveHousehold" class="action-btn danger">Leave Household</button>
+                        </div>
+                    </div>
+                    <p id="syncStatus" class="sync-status">Not synced</p>
+                </div>
+                <div class="settings-section">
+                    <h3>Backup</h3>
+                    <div class="sync-actions">
+                        <button id="exportData" class="action-btn">Export JSON</button>
+                        <button id="importData" class="action-btn">Import JSON</button>
+                        <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;">
+                    </div>
+                </div>
+                <div class="settings-section">
                     <h3>Reset Options</h3>
                     <button id="resetWeek" class="action-btn">🔄 Reset Weekly Progress</button>
                     <button id="resetAll" class="action-btn danger">⚠️ Reset All Progress</button>
@@ -503,19 +608,252 @@ main {
     </div>
 
     <script>
-// Mindi's Cleaning App - Main JavaScript
+// Cloudflare Worker URL — update after running `npx wrangler deploy` in the worker/ folder
+const SYNC_API_URL = 'https://mindi-cleaning-sync.YOUR-SUBDOMAIN.workers.dev';
+
+// IndexedDB key-value storage (replaces localStorage for iOS standalone reliability)
+const Storage = {
+    dbName: 'mindi-cleaning-db',
+    storeName: 'kv',
+    db: null,
+
+    async init() {
+        await this.openDb();
+        await this.migrateFromLocalStorage();
+    },
+
+    openDb() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, 1);
+            request.onupgradeneeded = () => {
+                request.result.createObjectStore(this.storeName);
+            };
+            request.onsuccess = () => {
+                this.db = request.result;
+                resolve();
+            };
+            request.onerror = () => reject(request.error);
+        });
+    },
+
+    async get(key) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(this.storeName, 'readonly');
+            const req = tx.objectStore(this.storeName).get(key);
+            req.onsuccess = () => resolve(req.result ?? null);
+            req.onerror = () => reject(req.error);
+        });
+    },
+
+    async set(key, value) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(this.storeName, 'readwrite');
+            tx.objectStore(this.storeName).put(value, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    },
+
+    async remove(key) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(this.storeName, 'readwrite');
+            tx.objectStore(this.storeName).delete(key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    },
+
+    async migrateFromLocalStorage() {
+        const keys = ['cleaningTasks', 'completedTasks', 'weeklyTasks', 'hasVisited', 'householdCode', 'taskMeta', 'roomMeta'];
+        for (const key of keys) {
+            const legacy = localStorage.getItem(key);
+            if (legacy === null) continue;
+            const existing = await this.get(key);
+            if (existing === null) {
+                try {
+                    await this.set(key, JSON.parse(legacy));
+                } catch {
+                    await this.set(key, legacy);
+                }
+            }
+            localStorage.removeItem(key);
+        }
+    }
+};
+
+class SyncClient {
+    constructor(app) {
+        this.app = app;
+        this.householdCode = null;
+        this.pollTimer = null;
+        this.pushTimer = null;
+        this.syncing = false;
+        this.lastSyncAt = null;
+    }
+
+    async init() {
+        this.householdCode = await Storage.get('householdCode');
+        this.updateUI();
+        if (this.householdCode) {
+            this.startPolling();
+            await this.sync();
+        }
+    }
+
+    updateUI() {
+        const configured = document.getElementById('syncConfigured');
+        const notConfigured = document.getElementById('syncNotConfigured');
+        const codeDisplay = document.getElementById('householdCodeDisplay');
+
+        if (this.householdCode) {
+            configured.style.display = 'block';
+            notConfigured.style.display = 'none';
+            codeDisplay.textContent = this.householdCode;
+        } else {
+            configured.style.display = 'none';
+            notConfigured.style.display = 'block';
+        }
+    }
+
+    setStatus(message, type = '') {
+        const el = document.getElementById('syncStatus');
+        el.textContent = message;
+        el.className = 'sync-status' + (type ? ` ${type}` : '');
+    }
+
+    formatSyncTime(date) {
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    async createHousehold() {
+        if (SYNC_API_URL.includes('YOUR-SUBDOMAIN')) {
+            this.setStatus('Set SYNC_API_URL in index.html after deploying the Worker', 'error');
+            return;
+        }
+        try {
+            this.setStatus('Creating household...');
+            const res = await fetch(`${SYNC_API_URL}/create`, { method: 'POST' });
+            if (!res.ok) throw new Error('Create failed');
+            const { code } = await res.json();
+            this.householdCode = code;
+            await Storage.set('householdCode', code);
+            this.updateUI();
+            this.startPolling();
+            await this.sync();
+            this.setStatus(`Household created! Code: ${code}`, 'synced');
+        } catch (err) {
+            this.setStatus('Could not create household. Check SYNC_API_URL.', 'error');
+            console.error(err);
+        }
+    }
+
+    async joinHousehold(code) {
+        code = (code || '').trim().toUpperCase();
+        if (!/^[A-Z0-9]{6}$/.test(code)) {
+            this.setStatus('Enter a valid 6-character code', 'error');
+            return;
+        }
+        try {
+            this.setStatus('Joining household...');
+            const res = await fetch(`${SYNC_API_URL}/state/${code}`);
+            if (!res.ok) throw new Error('Household not found');
+            const remote = await res.json();
+            this.householdCode = code;
+            await Storage.set('householdCode', code);
+            this.app.applySyncState(remote);
+            this.updateUI();
+            this.startPolling();
+            await this.sync();
+            this.setStatus('Joined and synced!', 'synced');
+        } catch (err) {
+            this.setStatus('Could not join. Check the code and SYNC_API_URL.', 'error');
+            console.error(err);
+        }
+    }
+
+    async leaveHousehold() {
+        if (!confirm('Leave this household? This device will stop syncing.')) return;
+        this.stopPolling();
+        this.householdCode = null;
+        await Storage.remove('householdCode');
+        this.updateUI();
+        this.setStatus('Left household');
+    }
+
+    startPolling() {
+        this.stopPolling();
+        this.pollTimer = setInterval(() => this.sync(), 30000);
+        document.addEventListener('visibilitychange', this.onVisibilityChange);
+    }
+
+    stopPolling() {
+        if (this.pollTimer) clearInterval(this.pollTimer);
+        this.pollTimer = null;
+        document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    }
+
+    onVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && this.householdCode) {
+            this.sync();
+        }
+    };
+
+    scheduleSync() {
+        if (!this.householdCode) return;
+        if (this.pushTimer) clearTimeout(this.pushTimer);
+        this.pushTimer = setTimeout(() => this.sync(), 1000);
+    }
+
+    async sync() {
+        if (!this.householdCode || this.syncing) return;
+        this.syncing = true;
+        try {
+            const res = await fetch(`${SYNC_API_URL}/state/${this.householdCode}`);
+            if (!res.ok) throw new Error('Fetch failed');
+            const remote = await res.json();
+            this.app.mergeRemoteState(remote);
+
+            const localState = this.app.getSyncState();
+            const putRes = await fetch(`${SYNC_API_URL}/state/${this.householdCode}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(localState),
+            });
+            if (!putRes.ok) throw new Error('Push failed');
+            const merged = await putRes.json();
+            this.app.applySyncState(merged, { skipPush: true });
+
+            this.lastSyncAt = new Date();
+            this.setStatus(`Synced ${this.formatSyncTime(this.lastSyncAt)}`, 'synced');
+        } catch (err) {
+            this.setStatus('Sync failed — will retry', 'error');
+            console.error(err);
+        } finally {
+            this.syncing = false;
+        }
+    }
+}
 
 class CleaningApp {
     constructor() {
         this.currentWeek = this.getCurrentWeek();
-        this.tasks = this.loadTasks();
-        this.completedTasks = this.loadCompletedTasks();
-        this.weeklyTasks = this.loadWeeklyTasks();
-
-        this.init();
+        this.tasks = {};
+        this.completedTasks = {};
+        this.weeklyTasks = [];
+        this.taskMeta = {};
+        this.roomMeta = {};
+        this.syncClient = null;
     }
 
-    init() {
+    async init() {
+        this.tasks = await this.loadTasks();
+        this.completedTasks = await this.loadCompletedTasks();
+        this.weeklyTasks = await this.loadWeeklyTasks();
+        this.taskMeta = (await Storage.get('taskMeta')) || {};
+        this.roomMeta = (await Storage.get('roomMeta')) || {};
+        this.ensureRoomTimestamps();
+
+        this.syncClient = new SyncClient(this);
         this.setupEventListeners();
         this.renderRooms();
         this.renderWeeklyTasks();
@@ -523,49 +861,220 @@ class CleaningApp {
         this.updateOverallProgress();
         this.updateWeeklyProgress();
         this.showWelcomeMessage();
+        this.setupIosInstallHint();
+        await this.syncClient.init();
     }
 
-    // Local Storage Management
-    loadTasks() {
+    ensureRoomTimestamps() {
+        const now = Date.now();
+        Object.keys(this.tasks).forEach((room) => {
+            if (!this.tasks[room].updatedAt) {
+                this.tasks[room].updatedAt = now;
+            }
+        });
+    }
+
+    touchTaskMeta(room, task, { deleted = false } = {}) {
+        const id = `${room}-${task}`;
+        const now = Date.now();
+        this.taskMeta[id] = deleted ? { updatedAt: now, deletedAt: now } : { updatedAt: now };
+    }
+
+    touchRoomMeta(room, { deleted = false } = {}) {
+        const now = Date.now();
+        this.roomMeta[room] = deleted ? { updatedAt: now, deletedAt: now } : { updatedAt: now };
+        if (this.tasks[room]) {
+            this.tasks[room].updatedAt = now;
+        }
+    }
+
+    getSyncState() {
+        return {
+            version: 0,
+            updatedAt: Date.now(),
+            tasks: this.tasks,
+            completedTasks: this.completedTasks,
+            weeklyTasks: {
+                week: this.currentWeek,
+                tasks: this.weeklyTasks,
+                updatedAt: Date.now(),
+            },
+            taskMeta: this.taskMeta,
+            roomMeta: this.roomMeta,
+        };
+    }
+
+    mergeRemoteState(remote) {
+        if (!remote) return;
+        const local = this.getSyncState();
+        const merged = this.mergeStates(local, remote);
+        this.applySyncState(merged, { skipPush: true, skipRender: true });
+    }
+
+    mergeStates(local, remote) {
+        const mergedTaskMeta = this.mergeMetaMaps(local.taskMeta || {}, remote.taskMeta || {});
+        const mergedRoomMeta = this.mergeMetaMaps(local.roomMeta || {}, remote.roomMeta || {});
+
+        return {
+            version: Math.max(local.version || 0, remote.version || 0) + 1,
+            updatedAt: Date.now(),
+            tasks: this.mergeTasksObject(local.tasks, remote.tasks, mergedTaskMeta, mergedRoomMeta),
+            completedTasks: this.mergeCompletions(local.completedTasks, remote.completedTasks),
+            weeklyTasks: this.mergeWeeklyData(local.weeklyTasks, remote.weeklyTasks),
+            taskMeta: mergedTaskMeta,
+            roomMeta: mergedRoomMeta,
+        };
+    }
+
+    mergeMetaMaps(a, b) {
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        const out = {};
+        for (const key of keys) {
+            const va = a[key];
+            const vb = b[key];
+            if (!va) { out[key] = vb; continue; }
+            if (!vb) { out[key] = va; continue; }
+            const aTime = va.updatedAt || va.deletedAt || 0;
+            const bTime = vb.updatedAt || vb.deletedAt || 0;
+            if (aTime === bTime) {
+                out[key] = va.deletedAt && vb.deletedAt ? va : va.deletedAt ? vb : va;
+            } else {
+                out[key] = aTime > bTime ? va : vb;
+            }
+        }
+        return out;
+    }
+
+    mergeTasksObject(localTasks, remoteTasks, taskMeta, roomMeta) {
+        if (!localTasks) return remoteTasks;
+        if (!remoteTasks) return localTasks;
+
+        const roomNames = new Set([...Object.keys(localTasks), ...Object.keys(remoteTasks)]);
+        const merged = {};
+
+        for (const room of roomNames) {
+            const rm = roomMeta[room];
+            if (rm && rm.deletedAt) continue;
+
+            const localRoom = localTasks[room];
+            const remoteRoom = remoteTasks[room];
+            if (!localRoom) { merged[room] = remoteRoom; continue; }
+            if (!remoteRoom) { merged[room] = localRoom; continue; }
+
+            const localUpdated = localRoom.updatedAt || 0;
+            const remoteUpdated = remoteRoom.updatedAt || 0;
+            const baits = localUpdated >= remoteUpdated ? localRoom.baits : remoteRoom.baits;
+
+            const taskSet = new Map();
+            const addTasks = (list, sourceUpdatedAt) => {
+                for (const text of list || []) {
+                    const id = `${room}-${text}`;
+                    const meta = taskMeta[id];
+                    if (meta && meta.deletedAt) continue;
+                    const existing = taskSet.get(text);
+                    if (!existing || sourceUpdatedAt >= existing.updatedAt) {
+                        taskSet.set(text, { text, updatedAt: sourceUpdatedAt });
+                    }
+                }
+            };
+
+            addTasks(localRoom.tasks, localUpdated);
+            addTasks(remoteRoom.tasks, remoteUpdated);
+
+            merged[room] = {
+                tasks: Array.from(taskSet.values()).map((t) => t.text),
+                baits: baits ?? 0,
+                updatedAt: Math.max(localUpdated, remoteUpdated),
+            };
+        }
+        return merged;
+    }
+
+    mergeCompletions(local, remote) {
+        const keys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
+        const out = {};
+        for (const key of keys) {
+            const lv = local[key];
+            const rv = remote[key];
+            if (!lv) { if (rv) out[key] = rv; continue; }
+            if (!rv) { out[key] = lv; continue; }
+            const lt = typeof lv === 'string' ? Date.parse(lv) : lv.updatedAt || 0;
+            const rt = typeof rv === 'string' ? Date.parse(rv) : rv.updatedAt || 0;
+            out[key] = lt >= rt ? lv : rv;
+        }
+        return out;
+    }
+
+    mergeWeeklyData(local, remote) {
+        if (!local) return remote;
+        if (!remote) return local;
+        const localUpdated = local.updatedAt || 0;
+        const remoteUpdated = remote.updatedAt || 0;
+        return localUpdated >= remoteUpdated ? local : remote;
+    }
+
+    applySyncState(state, { skipPush = false, skipRender = false } = {}) {
+        if (state.tasks) this.tasks = state.tasks;
+        if (state.completedTasks) this.completedTasks = state.completedTasks;
+        if (state.taskMeta) this.taskMeta = state.taskMeta;
+        if (state.roomMeta) this.roomMeta = state.roomMeta;
+        if (state.weeklyTasks) {
+            const w = state.weeklyTasks;
+            if (w.week === this.currentWeek || !w.week) {
+                this.weeklyTasks = w.tasks || this.weeklyTasks;
+            }
+        }
+        this.ensureRoomTimestamps();
+        this.persistAll({ skipPush });
+        if (!skipRender) {
+            this.renderRooms();
+            this.renderWeeklyTasks();
+            this.renderBaits();
+            this.updateOverallProgress();
+            this.updateWeeklyProgress();
+        }
+    }
+
+    async loadTasks() {
         const defaultTasks = this.getDefaultTasks();
-        const stored = localStorage.getItem('cleaningTasks');
-        return stored ? JSON.parse(stored) : defaultTasks;
+        const stored = await Storage.get('cleaningTasks');
+        return stored || defaultTasks;
     }
 
-    loadCompletedTasks() {
-        const stored = localStorage.getItem('completedTasks');
-        return stored ? JSON.parse(stored) : {};
+    async loadCompletedTasks() {
+        const stored = await Storage.get('completedTasks');
+        return stored || {};
     }
 
-    loadWeeklyTasks() {
-        const stored = localStorage.getItem('weeklyTasks');
+    async loadWeeklyTasks() {
+        const stored = await Storage.get('weeklyTasks');
         if (stored) {
-            const parsed = JSON.parse(stored);
-            // Check if weekly tasks are for current week
-            if (parsed.week === this.currentWeek) {
-                return parsed.tasks;
+            if (stored.week === this.currentWeek) {
+                return stored.tasks;
             }
         }
         return this.generateWeeklyTasks();
     }
 
-    saveTasks() {
-        localStorage.setItem('cleaningTasks', JSON.stringify(this.tasks));
-    }
-
-    saveCompletedTasks() {
-        localStorage.setItem('completedTasks', JSON.stringify(this.completedTasks));
-    }
-
-    saveWeeklyTasks() {
-        const weeklyData = {
+    persistAll({ skipPush = false } = {}) {
+        Storage.set('cleaningTasks', this.tasks);
+        Storage.set('completedTasks', this.completedTasks);
+        Storage.set('weeklyTasks', {
             week: this.currentWeek,
-            tasks: this.weeklyTasks
-        };
-        localStorage.setItem('weeklyTasks', JSON.stringify(weeklyData));
+            tasks: this.weeklyTasks,
+            updatedAt: Date.now(),
+        });
+        Storage.set('taskMeta', this.taskMeta);
+        Storage.set('roomMeta', this.roomMeta);
+        if (!skipPush && this.syncClient) {
+            this.syncClient.scheduleSync();
+        }
     }
 
-    // Get current week number (0-51)
+    saveTasks() { this.persistAll(); }
+    saveCompletedTasks() { this.persistAll(); }
+    saveWeeklyTasks() { this.persistAll(); }
+
     getCurrentWeek() {
         const now = new Date();
         const start = new Date(now.getFullYear(), 0, 1);
@@ -574,220 +1083,76 @@ class CleaningApp {
         return Math.floor(diff / oneWeek);
     }
 
-    // Default tasks structure - we'll populate this with user's lists
     getDefaultTasks() {
+        const now = Date.now();
+        const room = (tasks, baits = 0) => ({ tasks, baits, updatedAt: now });
         return {
-            "Bedroom": {
-                tasks: [
-                    "Clean skirting boards",
-                    "Clean windowsills",
-                    "Wash glass doors",
-                    "Wash windows",
-                    "De-clutter",
-                    "Vacuum",
-                    "Clean air con filters",
-                    "Clean mirror",
-                    "--- Walk in robe ---",
-                    "De-clutter",
-                    "Tidy",
-                    "Dust",
-                    "--- Ensuite ---",
-                    "De-clutter",
-                    "Clean sills",
-                    "Clean window",
-                    "Clean wall tiles",
-                    "Clean light and exhaust fan",
-                    "Clean mirror",
-                    "Clean shower",
-                    "Clean toilet"
-                ],
-                baits: 2
-            },
-            "Lounge Room": {
-                tasks: [
-                    "Clean glass doors",
-                    "Clean mirrors",
-                    "De-clutter bookshelf",
-                    "De-clutter TV cabinet",
-                    "Wash leather matt",
-                    "Condition couch",
-                    "Dust",
-                    "Clean skirting boards",
-                    "Clean light shades",
-                    "Dust features",
-                    "Vacuum",
-                    "Remove cobwebs"
-                ],
-                baits: 3
-            },
-            "Laundry": {
-                tasks: [
-                    "Clean cupboard tracks",
-                    "De-clutter cupboards",
-                    "Clean door fronts",
-                    "Wipe sills",
-                    "Wipe skirting boards",
-                    "Dust paintings",
-                    "Clean tiles"
-                ],
-                baits: 1
-            },
-            "Entries/Treadmill Area": {
-                tasks: [
-                    "Clean front door",
-                    "Clean skylight",
-                    "Clean glass",
-                    "Clean mirror",
-                    "Get rid of stains on matt",
-                    "Clean skirting boards",
-                    "De-clutter toy baskets and clean",
-                    "Dust",
-                    "Clean fan",
-                    "Clean air con filters",
-                    "Oil treadmill belt"
-                ],
-                baits: 2
-            },
-            "Dining/Family Room": {
-                tasks: [
-                    "Clean skirting boards",
-                    "Clean back of bench",
-                    "Clean chairs",
-                    "Clean table",
-                    "Wash runner",
-                    "Wash couch cover",
-                    "Dust",
-                    "Vacuum couch",
-                    "Dust TV",
-                    "Dust speaker",
-                    "Dust paintings",
-                    "Clean glass doors",
-                    "Clean door tracks"
-                ],
-                baits: 4
-            },
-            "Kitchen": {
-                tasks: [
-                    "Clean sink",
-                    "Clean all benches",
-                    "Clean stovetop",
-                    "Clean range",
-                    "Clean microwave",
-                    "Clean all cupboards",
-                    "Clean glass",
-                    "Clean front and top fridge",
-                    "Clean dishwasher",
-                    "De-clutter cupboards",
-                    "Clean skirting boards",
-                    "Clean light",
-                    "Clean skylight",
-                    "Clean oven"
-                ],
-                baits: 3
-            },
-            "Sewing Room": {
-                tasks: [
-                    "Clean window sills",
-                    "Clean skirting boards",
-                    "Clean windows",
-                    "Tidy room",
-                    "De-clutter",
-                    "New ironing board cover",
-                    "Take stuff to Vinnies",
-                    "Clean light fitting",
-                    "Clean fan",
-                    "Clean mirror"
-                ],
-                baits: 1
-            },
-            "Toilet": {
-                tasks: [
-                    "Clean window sills",
-                    "Clean skirting boards",
-                    "Clean toilet brush holder",
-                    "Clean window",
-                    "Check plant",
-                    "Clean toilet"
-                ],
-                baits: 1
-            },
-            "Bathroom": {
-                tasks: [
-                    "Clean window sills",
-                    "Clean tiles",
-                    "Clean mirror",
-                    "Clean shower",
-                    "Clean door",
-                    "Clean window",
-                    "Check plant",
-                    "De-clutter cupboard",
-                    "De-clutter drawers"
-                ],
-                baits: 2
-            },
-            "Kiddies Room": {
-                tasks: [
-                    "Clean window sills",
-                    "Clean skirting boards",
-                    "Clean windows",
-                    "Wash doona cover",
-                    "Clean air con filter",
-                    "Clean fan",
-                    "Clean light shade",
-                    "Run air con",
-                    "De-clutter cupboard",
-                    "Clean mirror",
-                    "Clean slider tracks",
-                    "Vacuum"
-                ],
-                baits: 2
-            },
-            "Guestroom": {
-                tasks: [
-                    "Clean window sills",
-                    "Clean skirting boards",
-                    "Clean windows",
-                    "Dust fan",
-                    "Dust light shade",
-                    "Clean air con filter",
-                    "Vacuum",
-                    "De-clutter cupboard",
-                    "Run air con",
-                    "Clean mirror",
-                    "Clean wardrobe tracks"
-                ],
-                baits: 1
-            },
-            "Outside - Entry": {
-                tasks: [
-                    "--- Entry ---",
-                    "Wash down",
-                    "Clean glass",
-                    "Wash front doors",
-                    "--- Courtyard ---",
-                    "Wash doors",
-                    "Clean and tidy area",
-                    "Wash dog bed",
-                    "--- Deck ---",
-                    "Wash down deck",
-                    "Wash furniture",
-                    "Water plants",
-                    "Clean windows",
-                    "Clean doors",
-                    "Get rid of cobwebs",
-                    "Clean barbecue area"
-                ],
-                baits: 0
-            },
+            "Bedroom": room([
+                "Clean skirting boards", "Clean windowsills", "Wash glass doors", "Wash windows",
+                "De-clutter", "Vacuum", "Clean air con filters", "Clean mirror",
+                "--- Walk in robe ---", "De-clutter", "Tidy", "Dust",
+                "--- Ensuite ---", "De-clutter", "Clean sills", "Clean window", "Clean wall tiles",
+                "Clean light and exhaust fan", "Clean mirror", "Clean shower", "Clean toilet"
+            ], 2),
+            "Lounge Room": room([
+                "Clean glass doors", "Clean mirrors", "De-clutter bookshelf", "De-clutter TV cabinet",
+                "Wash leather matt", "Condition couch", "Dust", "Clean skirting boards",
+                "Clean light shades", "Dust features", "Vacuum", "Remove cobwebs"
+            ], 3),
+            "Laundry": room([
+                "Clean cupboard tracks", "De-clutter cupboards", "Clean door fronts", "Wipe sills",
+                "Wipe skirting boards", "Dust paintings", "Clean tiles"
+            ], 1),
+            "Entries/Treadmill Area": room([
+                "Clean front door", "Clean skylight", "Clean glass", "Clean mirror",
+                "Get rid of stains on matt", "Clean skirting boards", "De-clutter toy baskets and clean",
+                "Dust", "Clean fan", "Clean air con filters", "Oil treadmill belt"
+            ], 2),
+            "Dining/Family Room": room([
+                "Clean skirting boards", "Clean back of bench", "Clean chairs", "Clean table",
+                "Wash runner", "Wash couch cover", "Dust", "Vacuum couch", "Dust TV", "Dust speaker",
+                "Dust paintings", "Clean glass doors", "Clean door tracks"
+            ], 4),
+            "Kitchen": room([
+                "Clean sink", "Clean all benches", "Clean stovetop", "Clean range", "Clean microwave",
+                "Clean all cupboards", "Clean glass", "Clean front and top fridge", "Clean dishwasher",
+                "De-clutter cupboards", "Clean skirting boards", "Clean light", "Clean skylight", "Clean oven"
+            ], 3),
+            "Sewing Room": room([
+                "Clean window sills", "Clean skirting boards", "Clean windows", "Tidy room",
+                "De-clutter", "New ironing board cover", "Take stuff to Vinnies", "Clean light fitting",
+                "Clean fan", "Clean mirror"
+            ], 1),
+            "Toilet": room([
+                "Clean window sills", "Clean skirting boards", "Clean toilet brush holder",
+                "Clean window", "Check plant", "Clean toilet"
+            ], 1),
+            "Bathroom": room([
+                "Clean window sills", "Clean tiles", "Clean mirror", "Clean shower", "Clean door",
+                "Clean window", "Check plant", "De-clutter cupboard", "De-clutter drawers"
+            ], 2),
+            "Kiddies Room": room([
+                "Clean window sills", "Clean skirting boards", "Clean windows", "Wash doona cover",
+                "Clean air con filter", "Clean fan", "Clean light shade", "Run air con",
+                "De-clutter cupboard", "Clean mirror", "Clean slider tracks", "Vacuum"
+            ], 2),
+            "Guestroom": room([
+                "Clean window sills", "Clean skirting boards", "Clean windows", "Dust fan",
+                "Dust light shade", "Clean air con filter", "Vacuum", "De-clutter cupboard",
+                "Run air con", "Clean mirror", "Clean wardrobe tracks"
+            ], 1),
+            "Outside - Entry": room([
+                "--- Entry ---", "Wash down", "Clean glass", "Wash front doors",
+                "--- Courtyard ---", "Wash doors", "Clean and tidy area", "Wash dog bed",
+                "--- Deck ---", "Wash down deck", "Wash furniture", "Water plants",
+                "Clean windows", "Clean doors", "Get rid of cobwebs", "Clean barbecue area"
+            ], 0),
         };
     }
 
-    // Generate weekly tasks - rotate through rooms
     generateWeeklyTasks() {
         const weeklyTasks = [];
         const roomNames = Object.keys(this.tasks);
-
-        // Select 3-5 tasks from different rooms
         const numTasks = Math.min(5, roomNames.length);
         const selectedRooms = this.shuffleArray(roomNames).slice(0, numTasks);
 
@@ -806,7 +1171,6 @@ class CleaningApp {
         return weeklyTasks;
     }
 
-    // Utility function to shuffle array
     shuffleArray(array) {
         const shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -816,96 +1180,128 @@ class CleaningApp {
         return shuffled;
     }
 
-    // Event Listeners
     setupEventListeners() {
-        // Tab switching
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
         });
 
-        // Weekly tasks refresh
         document.getElementById('refreshWeekly').addEventListener('click', () => this.refreshWeeklyTasks());
-
-        // Baits reset
         document.getElementById('resetBaits').addEventListener('click', () => this.resetBaitsProgress());
-
-        // Settings buttons
         document.getElementById('addRoom').addEventListener('click', () => this.showAddRoomForm());
         document.getElementById('resetWeek').addEventListener('click', () => this.resetWeeklyProgress());
         document.getElementById('resetAll').addEventListener('click', () => this.resetAllProgress());
 
-        // Modal close
+        document.getElementById('createHousehold').addEventListener('click', () => this.syncClient.createHousehold());
+        document.getElementById('joinHousehold').addEventListener('click', () => {
+            this.syncClient.joinHousehold(document.getElementById('joinCodeInput').value);
+        });
+        document.getElementById('syncNow').addEventListener('click', () => this.syncClient.sync());
+        document.getElementById('leaveHousehold').addEventListener('click', () => this.syncClient.leaveHousehold());
+
+        document.getElementById('exportData').addEventListener('click', () => this.exportData());
+        document.getElementById('importData').addEventListener('click', () => {
+            document.getElementById('importFileInput').click();
+        });
+        document.getElementById('importFileInput').addEventListener('change', (e) => this.importData(e));
+
         document.querySelector('.close-modal').addEventListener('click', () => this.closeModal());
         document.getElementById('congratsModal').addEventListener('click', (e) => {
             if (e.target.id === 'congratsModal') this.closeModal();
         });
     }
 
-    // Tab switching
+    setupIosInstallHint() {
+        const hint = document.getElementById('iosInstallHint');
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        Storage.get('installHintDismissed').then((dismissed) => {
+            if (isIos && !isStandalone && !dismissed) {
+                hint.classList.add('visible');
+            }
+        });
+        document.getElementById('dismissInstallHint').addEventListener('click', () => {
+            hint.classList.remove('visible');
+            Storage.set('installHintDismissed', true);
+        });
+    }
+
+    exportData() {
+        const data = this.getSyncState();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mindi-cleaning-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                this.applySyncState(data);
+                alert('Backup imported successfully!');
+            } catch {
+                alert('Could not import backup. Check the file format.');
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
     switchTab(tabName) {
-        // Update tab buttons
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         document.getElementById(`${tabName}Tab`).classList.add('active');
     }
 
-    // Render rooms and tasks
     renderRooms() {
         const roomList = document.getElementById('roomList');
         roomList.innerHTML = '';
-
         Object.keys(this.tasks).forEach(roomName => {
-            const roomSection = this.createRoomSection(roomName);
-            roomList.appendChild(roomSection);
+            roomList.appendChild(this.createRoomSection(roomName));
         });
     }
 
     createRoomSection(roomName) {
         const section = document.createElement('div');
         section.className = 'room-section';
-
         const roomData = this.tasks[roomName];
         const roomTasks = roomData.tasks;
         const baitsCount = roomData.baits || 0;
-        // Exclude subheadings from completion count
         const actualTasks = roomTasks.filter(task => !task.startsWith('---') || !task.endsWith('---'));
-        const completedCount = actualTasks.filter(task =>
-            this.isTaskCompleted(`${roomName}-${task}`)
-        ).length;
-
+        const completedCount = actualTasks.filter(task => this.isTaskCompleted(`${roomName}-${task}`)).length;
         const baitInfo = baitsCount > 0 ? ` (${baitsCount} bait${baitsCount !== 1 ? 's' : ''})` : '';
+        const safeRoom = roomName.replace(/'/g, "\\'");
 
         section.innerHTML = `
             <div class="room-header">
                 <h3 class="room-title">${roomName}${baitInfo}</h3>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <span class="room-progress">${completedCount}/${actualTasks.length} completed</span>
-                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editRoomName('${roomName}')">✏️ Edit Room</button>
-                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.addTaskToRoom('${roomName}')">➕ Add Task</button>
+                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editRoomName('${safeRoom}')">✏️ Edit Room</button>
+                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.addTaskToRoom('${safeRoom}')">➕ Add Task</button>
                 </div>
             </div>
             <div class="task-list">
                 ${roomTasks.map(task => this.createTaskElement(roomName, task)).join('')}
             </div>
         `;
-
         return section;
     }
 
     createTaskElement(roomName, task) {
         const taskId = `${roomName}-${task}`;
         const isCompleted = this.isTaskCompleted(taskId);
+        const safeTask = task.replace(/'/g, "\\'");
 
-        // Check if this is a subheading (starts with ---)
         if (task.startsWith('---') && task.endsWith('---')) {
-            return `
-                <div class="subheading">
-                    <span class="subheading-text">${task.replace(/---/g, '').trim()}</span>
-                </div>
-            `;
+            return `<div class="subheading"><span class="subheading-text">${task.replace(/---/g, '').trim()}</span></div>`;
         }
 
         return `
@@ -913,33 +1309,29 @@ class CleaningApp {
                 <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''}>
                 <span class="task-text">${task}</span>
                 <div class="task-actions">
-                    <button class="edit-btn" title="Edit task" onclick="cleaningApp.editTask('${roomName}', '${task.replace(/'/g, "\\'")}')">✏️</button>
-                    <button class="delete-btn" title="Delete task" onclick="cleaningApp.deleteTask('${roomName}', '${task.replace(/'/g, "\\'")}')">🗑️</button>
+                    <button class="edit-btn" title="Edit task" onclick="cleaningApp.editTask('${roomName.replace(/'/g, "\\'")}', '${safeTask}')">✏️</button>
+                    <button class="delete-btn" title="Delete task" onclick="cleaningApp.deleteTask('${roomName.replace(/'/g, "\\'")}', '${safeTask}')">🗑️</button>
                 </div>
             </div>
         `;
     }
 
-    // Render baits management
     renderBaits() {
         const baitsContainer = document.getElementById('baitsList');
         baitsContainer.innerHTML = '';
-
         Object.keys(this.tasks).forEach(roomName => {
             const roomData = this.tasks[roomName];
             if (roomData.baits > 0) {
                 const baitElement = document.createElement('div');
                 baitElement.className = 'room-section';
-
                 const baitId = `bait-${roomName}`;
                 const isCompleted = this.isTaskCompleted(baitId);
-
                 baitElement.innerHTML = `
                     <div class="room-header">
                         <h3 class="room-title">${roomName}</h3>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <span style="color: #666;">${roomData.baits} bait${roomData.baits !== 1 ? 's' : ''}</span>
-                            <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editBaits('${roomName}')">Edit Count</button>
+                            <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editBaits('${roomName.replace(/'/g, "\\'")}')">Edit Count</button>
                         </div>
                     </div>
                     <div class="task-list">
@@ -949,13 +1341,11 @@ class CleaningApp {
                         </div>
                     </div>
                 `;
-
                 baitsContainer.appendChild(baitElement);
             }
         });
     }
 
-    // Render weekly tasks
     renderWeeklyTasks() {
         const weeklyContainer = document.getElementById('weeklyTasks');
         weeklyContainer.innerHTML = '';
@@ -969,42 +1359,29 @@ class CleaningApp {
             const taskElement = document.createElement('div');
             taskElement.className = 'task-item';
             taskElement.dataset.taskId = weeklyTask.id;
-
             const isCompleted = this.isTaskCompleted(weeklyTask.id);
-
             taskElement.innerHTML = `
                 <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''} data-task-id="${weeklyTask.id}">
-                <span class="task-text">
-                    <strong>${weeklyTask.room}:</strong> ${weeklyTask.task}
-                </span>
+                <span class="task-text"><strong>${weeklyTask.room}:</strong> ${weeklyTask.task}</span>
             `;
-
-            if (isCompleted) {
-                taskElement.classList.add('completed');
-            }
-
-            weeklyContainer.appendChild(taskElement);
-
+            if (isCompleted) taskElement.classList.add('completed');
             weeklyContainer.appendChild(taskElement);
         });
     }
 
-    // Task completion handling
     toggleTaskCompletion(taskId) {
         if (this.completedTasks[taskId]) {
             delete this.completedTasks[taskId];
         } else {
             this.completedTasks[taskId] = new Date().toISOString();
         }
-
         this.saveCompletedTasks();
         this.updateOverallProgress();
         this.updateWeeklyProgress();
-        this.renderRooms(); // Refresh all rooms to show updated progress
-        this.renderWeeklyTasks(); // Refresh weekly tasks
-        this.renderBaits(); // Refresh baits if needed
+        this.renderRooms();
+        this.renderWeeklyTasks();
+        this.renderBaits();
 
-        // Check if all weekly tasks are completed
         const weeklyCompleted = this.weeklyTasks.every(task => this.isTaskCompleted(task.id));
         if (weeklyCompleted && this.weeklyTasks.length > 0) {
             this.showCongratulations();
@@ -1015,16 +1392,13 @@ class CleaningApp {
         return !!this.completedTasks[taskId];
     }
 
-    // Progress tracking
     updateOverallProgress() {
         const totalTasks = Object.values(this.tasks).reduce((sum, room) =>
             sum + room.tasks.filter(task => !task.startsWith('---') || !task.endsWith('---')).length, 0);
         const completedTasks = Object.keys(this.completedTasks).length;
         const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-
         const progressFill = document.getElementById('overallProgress');
         const progressText = document.getElementById('progressText');
-
         progressFill.style.width = `${percentage}%`;
 
         if (percentage === 100) {
@@ -1043,14 +1417,11 @@ class CleaningApp {
 
     updateWeeklyProgress() {
         if (this.weeklyTasks.length === 0) return;
-
         const completedWeeklyTasks = this.weeklyTasks.filter(task => this.isTaskCompleted(task.id)).length;
         const totalWeeklyTasks = this.weeklyTasks.length;
         const percentage = (completedWeeklyTasks / totalWeeklyTasks) * 100;
-
         const progressFill = document.getElementById('weeklyProgress');
         const progressText = document.getElementById('weeklyProgressText');
-
         if (progressFill) progressFill.style.width = `${percentage}%`;
 
         if (progressText) {
@@ -1072,7 +1443,6 @@ class CleaningApp {
         }
     }
 
-    // Weekly tasks management
     refreshWeeklyTasks() {
         this.weeklyTasks = this.generateWeeklyTasks();
         this.saveWeeklyTasks();
@@ -1080,7 +1450,6 @@ class CleaningApp {
         this.updateWeeklyProgress();
     }
 
-    // Settings functionality
     showAddRoomForm() {
         const editor = document.getElementById('taskEditor');
         editor.innerHTML = `
@@ -1089,12 +1458,12 @@ class CleaningApp {
             <input type="number" id="newRoomBaits" placeholder="Number of baits (0 if none)" min="0" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;">
             <button id="saveRoom" class="action-btn">Save Room</button>
         `;
-
         document.getElementById('saveRoom').addEventListener('click', () => {
             const roomName = document.getElementById('newRoomName').value.trim();
             const baitsCount = parseInt(document.getElementById('newRoomBaits').value) || 0;
             if (roomName && !this.tasks[roomName]) {
-                this.tasks[roomName] = { tasks: [], baits: baitsCount };
+                this.tasks[roomName] = { tasks: [], baits: baitsCount, updatedAt: Date.now() };
+                this.touchRoomMeta(roomName);
                 this.saveTasks();
                 this.renderRooms();
                 this.renderBaits();
@@ -1105,9 +1474,7 @@ class CleaningApp {
 
     resetWeeklyProgress() {
         if (confirm('Reset weekly progress? This will uncheck all weekly tasks.')) {
-            this.weeklyTasks.forEach(task => {
-                delete this.completedTasks[task.id];
-            });
+            this.weeklyTasks.forEach(task => delete this.completedTasks[task.id]);
             this.saveCompletedTasks();
             this.updateOverallProgress();
             this.updateWeeklyProgress();
@@ -1127,21 +1494,18 @@ class CleaningApp {
         }
     }
 
-    // Task editing functionality
     editTask(roomName, oldTask) {
         const newTask = prompt('Edit task:', oldTask);
         if (newTask && newTask.trim() !== oldTask) {
             const roomData = this.tasks[roomName];
             const taskIndex = roomData.tasks.indexOf(oldTask);
             if (taskIndex !== -1) {
-                // Remove old completion status
                 const oldTaskId = `${roomName}-${oldTask}`;
-                if (this.completedTasks[oldTaskId]) {
-                    delete this.completedTasks[oldTaskId];
-                }
-
-                // Update task
+                if (this.completedTasks[oldTaskId]) delete this.completedTasks[oldTaskId];
+                this.touchTaskMeta(roomName, oldTask, { deleted: true });
                 roomData.tasks[taskIndex] = newTask.trim();
+                this.touchTaskMeta(roomName, newTask.trim());
+                this.touchRoomMeta(roomName);
                 this.saveTasks();
                 this.saveCompletedTasks();
                 this.renderRooms();
@@ -1155,14 +1519,11 @@ class CleaningApp {
             const roomData = this.tasks[roomName];
             const taskIndex = roomData.tasks.indexOf(task);
             if (taskIndex !== -1) {
-                // Remove completion status
                 const taskId = `${roomName}-${task}`;
-                if (this.completedTasks[taskId]) {
-                    delete this.completedTasks[taskId];
-                }
-
-                // Remove task
+                if (this.completedTasks[taskId]) delete this.completedTasks[taskId];
+                this.touchTaskMeta(roomName, task, { deleted: true });
                 roomData.tasks.splice(taskIndex, 1);
+                this.touchRoomMeta(roomName);
                 this.saveTasks();
                 this.saveCompletedTasks();
                 this.renderRooms();
@@ -1177,6 +1538,8 @@ class CleaningApp {
         if (newTask && newTask.trim()) {
             const roomData = this.tasks[roomName];
             roomData.tasks.push(newTask.trim());
+            this.touchTaskMeta(roomName, newTask.trim());
+            this.touchRoomMeta(roomName);
             this.saveTasks();
             this.renderRooms();
         }
@@ -1186,30 +1549,25 @@ class CleaningApp {
         const newRoomName = prompt('Rename room to:', oldRoomName);
         if (newRoomName && newRoomName.trim() !== oldRoomName && newRoomName.trim()) {
             const trimmedNewName = newRoomName.trim();
-
-            // Check if new name already exists
             if (this.tasks[trimmedNewName]) {
                 alert('A room with this name already exists!');
                 return;
             }
-
-            // Rename the room
             this.tasks[trimmedNewName] = this.tasks[oldRoomName];
             delete this.tasks[oldRoomName];
+            this.touchRoomMeta(oldRoomName, { deleted: true });
+            this.touchRoomMeta(trimmedNewName);
 
-            // Update completion data for tasks
             const updatedCompletions = {};
             Object.keys(this.completedTasks).forEach(taskId => {
                 if (taskId.startsWith(`${oldRoomName}-`)) {
-                    const newTaskId = taskId.replace(`${oldRoomName}-`, `${trimmedNewName}-`);
-                    updatedCompletions[newTaskId] = this.completedTasks[taskId];
+                    updatedCompletions[taskId.replace(`${oldRoomName}-`, `${trimmedNewName}-`)] = this.completedTasks[taskId];
                 } else {
                     updatedCompletions[taskId] = this.completedTasks[taskId];
                 }
             });
             this.completedTasks = updatedCompletions;
 
-            // Update weekly tasks
             this.weeklyTasks.forEach(task => {
                 if (task.room === oldRoomName) {
                     task.room = trimmedNewName;
@@ -1232,12 +1590,12 @@ class CleaningApp {
         const newCount = prompt(`Number of baits in ${roomName}:`, roomData.baits);
         const count = parseInt(newCount);
         if (!isNaN(count) && count >= 0) {
-            // If reducing baits and this room was completed, uncheck it
             if (count === 0 && this.isTaskCompleted(`bait-${roomName}`)) {
                 delete this.completedTasks[`bait-${roomName}`];
                 this.saveCompletedTasks();
             }
             roomData.baits = count;
+            this.touchRoomMeta(roomName);
             this.saveTasks();
             this.renderRooms();
             this.renderBaits();
@@ -1249,9 +1607,7 @@ class CleaningApp {
         if (confirm('Reset all bait checks? This will uncheck all bait changes.')) {
             Object.keys(this.tasks).forEach(roomName => {
                 const baitId = `bait-${roomName}`;
-                if (this.completedTasks[baitId]) {
-                    delete this.completedTasks[baitId];
-                }
+                if (this.completedTasks[baitId]) delete this.completedTasks[baitId];
             });
             this.saveCompletedTasks();
             this.renderBaits();
@@ -1259,7 +1615,6 @@ class CleaningApp {
         }
     }
 
-    // Modal and congratulations
     showCongratulations() {
         const messages = [
             "🎉 Fantastic job! You're a cleaning superstar! ⭐⭐⭐",
@@ -1271,16 +1626,12 @@ class CleaningApp {
             "💫 Outstanding work! You're a cleaning wizard! 🧙‍♀️✨",
             "🏆 Victory is yours! Amazing achievement! 🎯🎉"
         ];
-
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
         document.getElementById('congratsContent').innerHTML = `
             <h2>🎉 Congratulations! 🎉</h2>
-            <p style="font-size: 1.2rem; margin: 15px 0;">${randomMessage}</p>
+            <p style="font-size: 1.2rem; margin: 15px 0;">${messages[Math.floor(Math.random() * messages.length)]}</p>
             <div style="font-size: 4rem; margin: 25px 0; animation: sparkle 2s ease-in-out;">🎉✨🏆⭐💫🌟🎊</div>
             <p style="font-weight: bold; color: #FF6B9D;">Ready for next week's tasks?</p>
         `;
-
         document.getElementById('congratsModal').style.display = 'block';
         this.createConfetti();
     }
@@ -1290,7 +1641,6 @@ class CleaningApp {
     }
 
     createConfetti() {
-        // Create 50 confetti pieces
         for (let i = 0; i < 50; i++) {
             const confetti = document.createElement('div');
             confetti.className = 'confetti';
@@ -1298,72 +1648,34 @@ class CleaningApp {
             confetti.style.animationDelay = Math.random() * 2 + 's';
             confetti.style.background = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B9D', '#4ECDC4'][Math.floor(Math.random() * 5)];
             document.body.appendChild(confetti);
-
-            // Remove confetti after animation
-            setTimeout(() => {
-                if (confetti.parentNode) {
-                    confetti.parentNode.removeChild(confetti);
-                }
-            }, 4000);
+            setTimeout(() => confetti.remove(), 4000);
         }
     }
 
     showWeeklyCelebration() {
-        // Small confetti burst for weekly completion
         setTimeout(() => {
             for (let i = 0; i < 30; i++) {
                 const sparkle = document.createElement('div');
                 sparkle.textContent = '⭐';
-                sparkle.style.position = 'fixed';
-                sparkle.style.left = Math.random() * 100 + '%';
-                sparkle.style.top = '50%';
-                sparkle.style.fontSize = '2rem';
-                sparkle.style.zIndex = '1001';
-                sparkle.style.animation = 'confetti 2s ease-out forwards';
-                sparkle.style.pointerEvents = 'none';
+                sparkle.style.cssText = 'position:fixed;left:' + (Math.random() * 100) + '%;top:50%;font-size:2rem;z-index:1001;animation:confetti 2s ease-out forwards;pointer-events:none';
                 document.body.appendChild(sparkle);
-
-                setTimeout(() => {
-                    if (sparkle.parentNode) {
-                        sparkle.parentNode.removeChild(sparkle);
-                    }
-                }, 2000);
+                setTimeout(() => sparkle.remove(), 2000);
             }
         }, 500);
     }
 
     showMilestoneMessage(message) {
-        // Quick milestone notification
         const notification = document.createElement('div');
         notification.textContent = message;
-        notification.style.position = 'fixed';
-        notification.style.top = '20%';
-        notification.style.left = '50%';
-        notification.style.transform = 'translateX(-50%)';
-        notification.style.background = 'linear-gradient(45deg, #FF6B9D, #4ECDC4)';
-        notification.style.color = 'white';
-        notification.style.padding = '15px 25px';
-        notification.style.borderRadius = '25px';
-        notification.style.fontWeight = 'bold';
-        notification.style.fontSize = '1.1rem';
-        notification.style.zIndex = '1001';
-        notification.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
-        notification.style.animation = 'modalAppear 0.5s ease-out';
-
+        notification.style.cssText = 'position:fixed;top:20%;left:50%;transform:translateX(-50%);background:linear-gradient(45deg,#FF6B9D,#4ECDC4);color:white;padding:15px 25px;border-radius:25px;font-weight:bold;font-size:1.1rem;z-index:1001;box-shadow:0 4px 15px rgba(0,0,0,0.3);animation:modalAppear 0.5s ease-out';
         document.body.appendChild(notification);
-
         setTimeout(() => {
             notification.style.animation = 'sparkle 0.5s ease-in';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 500);
+            setTimeout(() => notification.remove(), 500);
         }, 2000);
     }
 
     showOverallCelebration() {
-        // Special celebration for completing everything
         setTimeout(() => {
             for (let i = 0; i < 100; i++) {
                 const confetti = document.createElement('div');
@@ -1372,53 +1684,43 @@ class CleaningApp {
                 confetti.style.animationDelay = Math.random() * 3 + 's';
                 confetti.style.background = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#FF1493', '#00CED1'][Math.floor(Math.random() * 5)];
                 document.body.appendChild(confetti);
-
-                setTimeout(() => {
-                    if (confetti.parentNode) {
-                        confetti.parentNode.removeChild(confetti);
-                    }
-                }, 6000);
+                setTimeout(() => confetti.remove(), 6000);
             }
         }, 300);
     }
 
-    showWelcomeMessage() {
-        // Show a brief welcome message on first load
-        if (!localStorage.getItem('hasVisited')) {
-            setTimeout(() => {
-                alert("Welcome to Mindi's Cleaning Adventures! 🎉\n\nStart by checking out 'This Week's Tasks' or browse all rooms in the 'All Rooms' tab.");
-                localStorage.setItem('hasVisited', 'true');
+    async showWelcomeMessage() {
+        const hasVisited = await Storage.get('hasVisited');
+        if (!hasVisited) {
+            setTimeout(async () => {
+                alert("Welcome to Mindi's Cleaning Adventures! 🎉\n\nStart by checking out 'This Week's Tasks' or browse all rooms in the 'All Rooms' tab.\n\nTip: Go to Settings to sync between iPhone and iPad!");
+                await Storage.set('hasVisited', true);
             }, 1000);
         }
     }
 }
 
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new CleaningApp();
-});
+let cleaningApp;
 
-// Add event delegation for dynamically created elements
-document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('task-checkbox')) {
-        const taskItem = e.target.closest('.task-item');
-        const taskId = taskItem.dataset.taskId;
-        if (taskId) {
-            // Find the app instance and toggle completion
-            // This is a bit hacky, but works for this simple app
-            const app = window.cleaningApp;
-            if (app) {
-                app.toggleTaskCompletion(taskId);
-            }
-        }
+document.addEventListener('DOMContentLoaded', async () => {
+    await Storage.init();
+    cleaningApp = new CleaningApp();
+    await cleaningApp.init();
+    window.cleaningApp = cleaningApp;
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch((err) => console.warn('SW registration failed:', err));
     }
 });
 
-// Store app instance globally for event delegation
-let cleaningApp;
-document.addEventListener('DOMContentLoaded', () => {
-    cleaningApp = new CleaningApp();
-    window.cleaningApp = cleaningApp;
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('task-checkbox')) {
+        const taskItem = e.target.closest('.task-item');
+        const taskId = taskItem?.dataset?.taskId;
+        if (taskId && window.cleaningApp) {
+            window.cleaningApp.toggleTaskCompletion(taskId);
+        }
+    }
 });
     </script>
 </body>
