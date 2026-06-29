@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindi-cleaning-v4';
+const CACHE_NAME = 'mindi-cleaning-v5';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -32,6 +32,22 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Always try network first for HTML so updates reach the phone quickly
+  if (request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((cached) => {
       const fetchPromise = fetch(request)
@@ -43,7 +59,6 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => cached);
-
       return cached || fetchPromise;
     })
   );

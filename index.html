@@ -224,8 +224,23 @@ main {
 .manage-form-row input[type="text"],
 .manage-form-row input[type="number"] {
     width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 10px;
-    border: 2px solid #ddd; font-size: 1rem; background: white; color: var(--text-primary);
+    border: 2px solid #ccc; font-size: 1rem; background: white; color: var(--text-primary);
+    -webkit-appearance: menulist; appearance: auto;
 }
+.manage-form-row select {
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center;
+    padding-right: 36px;
+}
+.manage-section-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin: 8px 0 12px; }
+.app-version {
+    text-align: center; font-size: 0.8rem; color: var(--text-secondary);
+    margin-top: 24px; padding-top: 16px; border-top: 1px solid #dee2e6;
+}
+.update-banner {
+    display: none; background: var(--accent); color: #2C3E50; padding: 10px 14px;
+    border-radius: 10px; margin-bottom: 12px; font-size: 0.9rem; text-align: center;
+}
+.update-banner.visible { display: block; }
 .manage-form-row select:focus,
 .manage-form-row input:focus { outline: none; border-color: var(--primary); }
 .manage-form-row .action-btn { align-self: flex-start; min-height: 44px; }
@@ -449,11 +464,10 @@ body.time-night .task-item.completed .task-text { color: #95a5a6; }
             <h2>Settings</h2>
             <div class="settings-section">
                 <h3>Manage Tasks</h3>
-                <button id="addRoom" class="action-btn">Add New Room/Area</button>
-                <div id="taskEditor" class="task-editor"></div>
+                <div id="updateBanner" class="update-banner">A new version is available — close the app completely and reopen to update.</div>
+                <p class="manage-section-title">Edit existing rooms</p>
+                <p class="manage-hint">Pick a room from the dropdown, then add a task or make changes below. You can also edit individual tasks on the <strong>All Rooms</strong> tab.</p>
                 <div id="manageTasksPanel">
-                    <p class="manage-hint">You can also edit or delete individual tasks from the <strong>All Rooms</strong> tab.</p>
-                    <div class="manage-divider"></div>
                     <div class="manage-form-row">
                         <span class="manage-label">Add task to a room</span>
                         <select id="addTaskRoom" class="manage-room-select" aria-label="Room for new task"></select>
@@ -486,6 +500,11 @@ body.time-night .task-item.completed .task-text { color: #95a5a6; }
                         <button type="button" id="deleteRoomBtn" class="action-btn danger">Delete Room</button>
                     </div>
                 </div>
+                <div class="manage-divider"></div>
+                <p class="manage-section-title">Create a new room</p>
+                <p class="manage-hint">Only use this if you need a brand-new room that is not in the list above.</p>
+                <button id="addRoom" class="action-btn">Add New Room/Area</button>
+                <div id="taskEditor" class="task-editor"></div>
             </div>
             <div class="settings-section">
                 <h3>Theme</h3>
@@ -540,6 +559,7 @@ body.time-night .task-item.completed .task-text { color: #95a5a6; }
                 <button id="resetWeek" class="action-btn">Reset Weekly Progress</button>
                 <button id="resetAll" class="action-btn danger">Reset All Progress</button>
             </div>
+            <p class="app-version">Mindi's Cleaning v<span id="appVersionDisplay"></span></p>
         </div>
     </main>
 </div>
@@ -570,6 +590,8 @@ body.time-night .task-item.completed .task-text { color: #95a5a6; }
 <div id="congratsModal" class="modal"><div class="modal-content"><button class="close-modal" id="closeCongrats">&times;</button><div id="congratsContent"></div></div></div>
 <div id="badgeToast" class="badge-toast" role="status" aria-live="polite"></div>
 <script>
+const APP_VERSION = '2.1.0';
+
 const Haptics = {
     light() { if (navigator.vibrate) navigator.vibrate(10); },
     medium() { if (navigator.vibrate) navigator.vibrate(20); },
@@ -875,6 +897,7 @@ class CleaningApp {
         this.setupPullToRefresh();
         this.maybeShowMonthlyRecap();
         this.renderManageTasksForms();
+        this.displayAppVersion();
         requestAnimationFrame(() => this.updateTabIndicator());
         if (this.theme === 'auto') {
             setInterval(() => this.applyTimeOfDay(), 60000);
@@ -1326,12 +1349,18 @@ class CleaningApp {
 
     populateRoomSelects() {
         const rooms = Object.keys(this.tasks);
+        const placeholder = '<option value="">— Choose a room —</option>';
         document.querySelectorAll('.manage-room-select').forEach(select => {
             const current = select.value;
-            select.innerHTML = rooms.length
-                ? rooms.map(r => `<option value="${r.replace(/"/g, '&quot;')}">${r}</option>`).join('')
-                : '<option value="">No rooms yet</option>';
+            if (rooms.length) {
+                select.innerHTML = placeholder + rooms.map(r =>
+                    `<option value="${r.replace(/"/g, '&quot;')}">${r}</option>`
+                ).join('');
+            } else {
+                select.innerHTML = '<option value="">No rooms yet — add one below</option>';
+            }
             if (current && rooms.includes(current)) select.value = current;
+            else select.value = '';
         });
         const baitsInput = document.getElementById('baitsCountInput');
         const baitsRoom = document.getElementById('baitsRoomSelect');
@@ -1381,6 +1410,11 @@ class CleaningApp {
 
     renderManageTasksForms() {
         this.populateRoomSelects();
+    }
+
+    displayAppVersion() {
+        const el = document.getElementById('appVersionDisplay');
+        if (el) el.textContent = APP_VERSION;
     }
 
     showAddRoomForm() {
@@ -1449,7 +1483,7 @@ class CleaningApp {
 
     addTaskToRoom(room, taskText) {
         if (!room || !this.tasks[room]) {
-            if (!room) alert('Please select a room.');
+            alert('Please choose a room from the dropdown first.');
             return false;
         }
         let text = taskText;
@@ -1806,7 +1840,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     cleaningApp = new CleaningApp();
     await cleaningApp.init();
     window.cleaningApp = cleaningApp;
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+                const worker = reg.installing;
+                worker?.addEventListener('statechange', () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        document.getElementById('updateBanner')?.classList.add('visible');
+                    }
+                });
+            });
+        }).catch(err => console.warn('SW registration failed:', err));
+    }
 });
 
 document.addEventListener('click', (e) => {
