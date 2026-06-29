@@ -1,21 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mindi's Cleaning Checklist</title>
-
-    <!-- PWA Manifest and Icons -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FF6B9D">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Mindi's Cleaning">
-    <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <style>
-/* Fun color palette */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mindi's Cleaning Checklist</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FF6B9D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mindi's Cleaning">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<style>
 :root {
     --primary: #FF6B9D;
     --secondary: #4ECDC4;
@@ -27,899 +24,504 @@
     --text-primary: #2C3E50;
     --text-secondary: #7F8C8D;
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --ring-track: #E0E0E0;
+    --ring-size: 90px;
 }
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+:root[data-theme="sunset"] {
+    --primary: #FF7E5F; --secondary: #FEB47B; --accent: #FFD194;
+    --background: linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%);
 }
-
+:root[data-theme="ocean"] {
+    --primary: #2193b0; --secondary: #6dd5ed; --accent: #a8edea;
+    --background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+}
+:root[data-theme="forest"] {
+    --primary: #56ab2f; --secondary: #a8e063; --accent: #d4fc79;
+    --background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--background);
-    min-height: 100vh;
-    color: var(--text-primary);
-    line-height: 1.6;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    min-height: 100vh; color: var(--text-primary); line-height: 1.6;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow-x: hidden;
 }
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+.particle-layer {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
 }
-
+.particle {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,107,157,0.4));
+    animation: particleDrift var(--dur, 18s) linear infinite;
+    opacity: 0.5;
+}
+@keyframes particleDrift {
+    0% { transform: translate(0, 100vh) scale(0.5); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.4; }
+    100% { transform: translate(var(--dx, 40px), -10vh) scale(1.2); opacity: 0; }
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
 .ios-install-hint {
-    display: none;
-    background: linear-gradient(45deg, var(--primary), var(--secondary));
-    color: white;
-    padding: 12px 16px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    font-size: 0.95rem;
-    box-shadow: var(--shadow);
+    display: none; background: linear-gradient(45deg, var(--primary), var(--secondary));
+    color: white; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px;
+    font-size: 0.95rem; box-shadow: var(--shadow);
 }
-
-.ios-install-hint.visible {
-    display: block;
-}
-
+.ios-install-hint.visible { display: block; }
 .ios-install-hint button {
-    background: white;
-    color: var(--primary);
-    border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    margin-left: 8px;
-    font-weight: 600;
-    cursor: pointer;
+    background: white; color: var(--primary); border: none; padding: 6px 12px;
+    border-radius: 8px; margin-left: 8px; font-weight: 600; cursor: pointer;
 }
-
-.sync-status {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-top: 10px;
-}
-
-.sync-status.synced {
-    color: var(--success);
-}
-
-.sync-status.error {
-    color: #e74c3c;
-}
-
-.sync-code-display {
-    font-size: 1.8rem;
-    font-weight: bold;
-    letter-spacing: 4px;
-    color: var(--primary);
-    margin: 10px 0;
-    font-family: monospace;
-}
-
-.sync-input {
-    width: 100%;
-    max-width: 200px;
-    padding: 10px;
-    margin: 10px 8px 10px 0;
-    border-radius: 8px;
-    border: 2px solid #ddd;
-    font-size: 1.2rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    font-family: monospace;
-}
-
-.sync-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-/* Header */
 header {
-    text-align: center;
-    margin-bottom: 30px;
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: var(--shadow);
+    text-align: center; margin-bottom: 30px; background: var(--card-bg);
+    padding: 24px; border-radius: 20px; box-shadow: var(--shadow);
 }
-
+.header-top { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
+    font-size: 2rem; margin: 8px 0;
     background: linear-gradient(45deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-
-.progress-section {
-    margin-top: 20px;
-}
-
-.progress-section h2 {
-    margin-bottom: 10px;
-    color: var(--text-secondary);
-}
-
-.progress-bar {
-    width: 100%;
-    height: 30px;
-    background: #E0E0E0;
-    border-radius: 15px;
-    overflow: hidden;
-    margin-bottom: 10px;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--success), var(--accent));
-    width: 0%;
-    transition: width 0.5s ease;
-    border-radius: 15px;
-}
-
-#progressText {
-    font-weight: bold;
-    color: var(--primary);
-}
-
-/* Navigation */
-.nav-tabs {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 30px;
-    background: var(--card-bg);
-    border-radius: 15px;
-    padding: 5px;
-    box-shadow: var(--shadow);
-}
-
-.tab-button {
-    background: none;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: var(--text-secondary);
-}
-
-.tab-button.active {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
-}
-
-.tab-button:hover:not(.active) {
-    background: rgba(255, 107, 157, 0.1);
-    color: var(--primary);
-}
-
-/* Main content */
-main {
-    background: var(--card-bg);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: var(--shadow);
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-.tab-content h2 {
-    margin-bottom: 20px;
-    color: var(--text-primary);
-    text-align: center;
-}
-
-/* Task lists */
-.task-list, .room-list {
-    margin-bottom: 20px;
-}
-
-.task-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: #F8F9FA;
-    border-radius: 10px;
-    border-left: 4px solid var(--secondary);
-    transition: all 0.3s ease;
-}
-
-.task-item.completed {
-    background: linear-gradient(90deg, var(--success), #A8E6CF);
-    border-left-color: var(--success);
-    opacity: 0.8;
-}
-
-.task-item.completed .task-text {
-    text-decoration: line-through;
-    color: #666;
-}
-
-.task-checkbox {
-    width: 24px;
-    height: 24px;
-    margin-right: 15px;
-    cursor: pointer;
-    accent-color: var(--primary);
-}
-
-.task-text {
-    flex-grow: 1;
-    font-size: 1.1rem;
-}
-
-.task-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.edit-btn, .delete-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 5px;
-    border-radius: 5px;
-    transition: background 0.3s ease;
-}
-
-.edit-btn:hover {
-    background: rgba(78, 205, 196, 0.2);
-}
-
-.delete-btn:hover {
-    background: rgba(255, 160, 122, 0.2);
-}
-
-/* Room sections */
-.room-section {
-    margin-bottom: 30px;
-    border: 2px solid #E0E0E0;
-    border-radius: 15px;
-    padding: 20px;
-}
-
-.room-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.room-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--primary);
-}
-
-.room-progress {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-/* Buttons */
-.refresh-btn, .action-btn {
-    background: linear-gradient(45deg, var(--primary), var(--secondary));
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
-}
-
-.refresh-btn:hover, .action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
-}
-
-.action-btn.danger {
-    background: linear-gradient(45deg, var(--warning), #FF6B6B);
-}
-
-.action-btn.danger:hover {
-    box-shadow: 0 6px 20px rgba(255, 160, 122, 0.4);
-}
-
-/* Settings */
-.settings-section {
-    margin-bottom: 30px;
-    padding: 20px;
-    background: #F8F9FA;
-    border-radius: 10px;
-}
-
-.settings-section h3 {
-    margin-bottom: 15px;
-    color: var(--text-primary);
-}
-
-.task-editor {
-    margin-top: 15px;
-}
-
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-    background-color: white;
-    margin: 15% auto;
-    padding: 30px;
-    border-radius: 20px;
-    width: 80%;
-    max-width: 500px;
-    position: relative;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    animation: modalAppear 0.3s ease;
-}
-
-@keyframes modalAppear {
-    from { transform: scale(0.7); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-@keyframes sparkle {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    25% { transform: scale(1.1) rotate(5deg); }
-    50% { transform: scale(1.2) rotate(-5deg); }
-    75% { transform: scale(1.1) rotate(3deg); }
-}
-
-@keyframes confetti {
-    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-}
-
-.confetti {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    background: #FF6B9D;
-    top: -10px;
-    z-index: 1001;
-    animation: confetti 3s ease-in-out forwards;
-}
-
-.confetti:nth-child(2n) { background: #4ECDC4; left: 10%; animation-delay: 0.1s; }
-.confetti:nth-child(3n) { background: #FFE66D; left: 20%; animation-delay: 0.2s; }
-.confetti:nth-child(4n) { background: #FF6B9D; left: 30%; animation-delay: 0.3s; }
-.confetti:nth-child(5n) { background: #4ECDC4; left: 40%; animation-delay: 0.4s; }
-.confetti:nth-child(6n) { background: #FFE66D; left: 50%; animation-delay: 0.5s; }
-.confetti:nth-child(7n) { background: #FF6B9D; left: 60%; animation-delay: 0.6s; }
-.confetti:nth-child(8n) { background: #4ECDC4; left: 70%; animation-delay: 0.7s; }
-.confetti:nth-child(9n) { background: #FFE66D; left: 80%; animation-delay: 0.8s; }
-.confetti:nth-child(10n) { background: #FF6B9D; left: 90%; animation-delay: 0.9s; }
-
-.close-modal {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    color: var(--text-secondary);
-}
-
-.close-modal:hover {
-    color: var(--primary);
-}
-
-/* Subheadings */
-.subheading {
-    background: linear-gradient(90deg, #FFE66D, #4ECDC4);
-    color: white;
-    padding: 8px 15px;
-    margin: 15px 0 5px 0;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.subheading-text {
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Time-of-day gradient backgrounds */
-body.time-morning {
-    background: linear-gradient(135deg, #FFB6C1 0%, #FFD580 50%, #FF9A8B 100%);
-}
-body.time-midday {
-    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
-}
-body.time-evening {
-    background: linear-gradient(135deg, #614385 0%, #516395 50%, #2C3E50 100%);
-}
-body.time-night {
-    background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
-    color: #ecf0f1;
-}
-body.time-night header,
-body.time-night main,
-body.time-night .nav-tabs {
-    background: rgba(40, 45, 60, 0.92);
-    color: #ecf0f1;
-}
-body.time-night .tab-button,
-body.time-night .progress-section h2,
-body.time-night .room-progress,
-body.time-night .sync-status,
-body.time-night .settings-section {
-    color: #bdc3c7;
-}
-body.time-night .task-item,
-body.time-night .settings-section {
-    background: rgba(50, 55, 70, 0.85);
-}
-body.time-night .room-section {
-    border-color: rgba(255, 255, 255, 0.15);
-}
-body.time-night .task-text,
-body.time-night .room-title,
-body.time-night h2,
-body.time-night h3 {
-    color: #ecf0f1;
-}
-body.time-night .task-item.completed .task-text {
-    color: #95a5a6;
-}
-
-/* Streak badge */
-.streak-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(45deg, #FF6B9D, #FFA500);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 1rem;
-    margin-top: 12px;
-    box-shadow: 0 3px 10px rgba(255, 107, 157, 0.4);
-    animation: flameFlicker 2s ease-in-out infinite;
-}
-@keyframes flameFlicker {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-}
-.streak-badge.zero {
-    background: linear-gradient(45deg, #95a5a6, #bdc3c7);
-    animation: none;
-    box-shadow: none;
-}
-
-/* Mindi avatar */
-.mindi-avatar {
-    font-size: 3rem;
-    display: inline-block;
-    animation: avatarBob 3s ease-in-out infinite;
+.mindi-mascot {
+    width: 72px; height: 72px; display: inline-block;
+    animation: mascotBob 3s ease-in-out infinite;
     transition: transform 0.3s ease;
 }
-.mindi-avatar.celebrate { animation: avatarCelebrate 0.8s ease-in-out; }
-.mindi-avatar.sleep { animation: avatarSleep 4s ease-in-out infinite; opacity: 0.7; }
-@keyframes avatarBob {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-6px) rotate(3deg); }
+.mindi-mascot.happy { animation: mascotHappy 1.2s ease-in-out infinite; }
+.mindi-mascot.celebrate { animation: mascotCelebrate 0.8s ease-in-out; }
+.mindi-mascot.sleep { animation: mascotSleep 4s ease-in-out infinite; opacity: 0.75; }
+.mindi-mascot .mascot-eye { transform-origin: center; }
+.mindi-mascot.idle .mascot-eye { animation: blink 4s ease-in-out infinite; }
+@keyframes mascotBob { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-6px) rotate(3deg)} }
+@keyframes mascotHappy { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08) rotate(-3deg)} }
+@keyframes mascotCelebrate { 0%,100%{transform:scale(1)} 25%{transform:scale(1.25) rotate(-10deg)} 50%{transform:scale(1.15) rotate(10deg)} 75%{transform:scale(1.25) rotate(-5deg)} }
+@keyframes mascotSleep { 0%,100%{transform:translateY(0)} 50%{transform:translateY(3px)} }
+@keyframes blink { 0%,46%,54%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.1)} }
+.streak-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(45deg, #FF6B9D, #FFA500); color: white;
+    padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 1rem;
+    box-shadow: 0 3px 10px rgba(255,107,157,0.4); animation: flameFlicker 2s ease-in-out infinite;
 }
-@keyframes avatarCelebrate {
-    0%, 100% { transform: scale(1) rotate(0); }
-    25% { transform: scale(1.3) rotate(-10deg); }
-    50% { transform: scale(1.2) rotate(10deg); }
-    75% { transform: scale(1.3) rotate(-5deg); }
+.streak-badge.zero { background: linear-gradient(45deg,#95a5a6,#bdc3c7); animation: none; box-shadow: none; }
+@keyframes flameFlicker { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+.progress-section { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.progress-section h2 { font-size: 1rem; color: var(--text-secondary); }
+.progress-ring-wrap { position: relative; width: var(--ring-size); height: var(--ring-size); }
+.progress-ring-wrap.lg { --ring-size: 100px; }
+.progress-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.progress-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 8; }
+.progress-ring .ring-fill {
+    fill: none; stroke: url(#ringGrad); stroke-width: 8; stroke-linecap: round;
+    stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1);
 }
-@keyframes avatarSleep {
-    0%, 100% { transform: translateY(0) rotate(0); }
-    50% { transform: translateY(2px) rotate(-2deg); }
+.progress-ring-text {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 1.1rem; color: var(--primary);
 }
-
-/* Animated SVG checkbox */
-.task-check {
-    width: 28px;
-    height: 28px;
-    margin-right: 15px;
-    cursor: pointer;
-    flex-shrink: 0;
+.nav-tabs {
+    display: flex; justify-content: center; margin-bottom: 30px;
+    background: var(--card-bg); border-radius: 15px; padding: 5px;
+    box-shadow: var(--shadow); position: relative; gap: 4px;
 }
-.task-check .check-circle {
-    fill: white;
-    stroke: #d0d0d0;
-    stroke-width: 2;
-    transition: stroke 0.3s ease;
+.tab-indicator {
+    position: absolute; top: 5px; bottom: 5px; border-radius: 10px;
+    background: var(--primary); box-shadow: 0 2px 8px rgba(255,107,157,0.3);
+    transition: left 0.35s cubic-bezier(0.4,0,0.2,1), width 0.35s cubic-bezier(0.4,0,0.2,1);
+    z-index: 0;
 }
-.task-check .check-path {
-    fill: none;
-    stroke: white;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-dasharray: 30;
-    stroke-dashoffset: 30;
-    transition: stroke-dashoffset 0.35s ease 0.05s;
+.tab-button {
+    background: none; border: none; padding: 12px 20px; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: color 0.3s;
+    color: var(--text-secondary); position: relative; z-index: 1; flex: 1; max-width: 180px;
 }
-.task-item.completed .task-check .check-circle {
-    fill: var(--success);
-    stroke: var(--success);
+.tab-button.active { color: white; }
+.tab-button:hover:not(.active) { color: var(--primary); }
+main {
+    background: var(--card-bg); border-radius: 20px; padding: 30px;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
 }
-.task-item.completed .task-check .check-path {
-    stroke-dashoffset: 0;
+.tab-content {
+    display: none; opacity: 0; transform: translateX(16px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.tab-content.active { display: block; opacity: 1; transform: translateX(0); }
+.tab-content.exit-left { transform: translateX(-16px); opacity: 0; }
+.tab-content h2 { margin-bottom: 20px; text-align: center; }
+.task-list, .room-list { margin-bottom: 20px; }
+.task-item {
+    display: flex; align-items: center; padding: 15px; margin-bottom: 10px;
+    background: #F8F9FA; border-radius: 10px; border-left: 4px solid var(--secondary);
+    transition: background 0.3s ease;
 }
 .task-item.completed {
-    animation: checkBounce 0.4s ease;
+    background: linear-gradient(90deg, var(--success), #A8E6CF);
+    border-left-color: var(--success); opacity: 0.85;
+    animation: checkBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@keyframes checkBounce {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
+.task-item.completed .task-text { text-decoration: line-through; color: #666; }
+@keyframes checkBounce { 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
+.task-check {
+    width: 32px; height: 32px; margin-right: 15px; cursor: pointer; flex-shrink: 0; position: relative;
 }
-
-/* Today's mission card */
+.task-check .check-circle { fill: white; stroke: #d0d0d0; stroke-width: 2; transition: fill 0.25s, stroke 0.25s; }
+.task-check .check-path {
+    fill: none; stroke: white; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 30; stroke-dashoffset: 30;
+    transition: stroke-dashoffset 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s;
+}
+.task-check .check-ripple {
+    fill: none; stroke: var(--success); stroke-width: 2; opacity: 0;
+    transform-origin: 16px 16px; transform: scale(0.5);
+}
+.task-item.completed .task-check .check-circle { fill: var(--success); stroke: var(--success); }
+.task-item.completed .task-check .check-path { stroke-dashoffset: 0; }
+.task-item.just-checked .check-ripple { animation: checkRipple 0.5s ease-out; }
+@keyframes checkRipple {
+    0% { opacity: 0.8; transform: scale(0.6); }
+    100% { opacity: 0; transform: scale(1.8); }
+}
+.task-text { flex-grow: 1; font-size: 1.05rem; }
+.task-actions { display: flex; gap: 10px; }
+.edit-btn, .delete-btn {
+    background: none; border: none; cursor: pointer; font-size: 1.2rem;
+    padding: 5px; border-radius: 5px; transition: background 0.3s;
+}
+.edit-btn:hover { background: rgba(78,205,196,0.2); }
+.delete-btn:hover { background: rgba(255,160,122,0.2); }
+.room-section {
+    margin-bottom: 30px; border: 2px solid #E0E0E0; border-radius: 15px; padding: 20px;
+}
+.room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.room-title-wrap { display: flex; align-items: center; gap: 10px; }
+.room-icon { width: 32px; height: 32px; flex-shrink: 0; }
+.room-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); }
+.room-progress { font-size: 0.9rem; color: var(--text-secondary); }
+.room-icon.kitchen-steam .steam { animation: steamRise 2s ease-in-out infinite; }
+.room-icon.bath-bubbles .bubble { animation: bubblePop 2.5s ease-in-out infinite; }
+.room-icon.outside-leaf .leaf { animation: leafSway 3s ease-in-out infinite; transform-origin: bottom center; }
+.room-icon.bedroom-star .star { animation: starTwinkle 2s ease-in-out infinite; }
+@keyframes steamRise { 0%,100%{opacity:0.3;transform:translateY(0)} 50%{opacity:0.9;transform:translateY(-4px)} }
+@keyframes bubblePop { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.2);opacity:1} }
+@keyframes leafSway { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(8deg)} }
+@keyframes starTwinkle { 0%,100%{opacity:0.5} 50%{opacity:1} }
+.refresh-btn, .action-btn {
+    background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white;
+    border: none; padding: 12px 24px; border-radius: 25px; font-size: 1rem;
+    font-weight: 600; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 15px rgba(255,107,157,0.3);
+}
+.refresh-btn:hover, .action-btn:hover { transform: translateY(-2px); }
+.action-btn.danger { background: linear-gradient(45deg, var(--warning), #FF6B6B); }
+.settings-section { margin-bottom: 24px; padding: 20px; background: #F8F9FA; border-radius: 10px; }
+.settings-section h3 { margin-bottom: 12px; }
+.theme-swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+.theme-swatch {
+    width: 56px; height: 56px; border-radius: 14px; border: 3px solid transparent;
+    cursor: pointer; transition: transform 0.2s, border-color 0.2s; position: relative;
+}
+.theme-swatch:hover { transform: scale(1.08); }
+.theme-swatch.active { border-color: var(--primary); transform: scale(1.05); }
+.theme-swatch span { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; white-space: nowrap; color: var(--text-secondary); }
+.theme-swatch.auto { background: linear-gradient(135deg,#FFB6C1,#667EEA,#0F2027); }
+.theme-swatch.sunset { background: linear-gradient(135deg,#ff6e7f,#bfe9ff); }
+.theme-swatch.ocean { background: linear-gradient(135deg,#2193b0,#6dd5ed); }
+.theme-swatch.forest { background: linear-gradient(135deg,#134e5e,#71b280); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
+.toggle-switch {
+    width: 48px; height: 26px; background: #ccc; border-radius: 13px;
+    position: relative; cursor: pointer; transition: background 0.3s; border: none;
+}
+.toggle-switch.on { background: var(--success); }
+.toggle-switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+    background: white; border-radius: 50%; transition: transform 0.3s;
+}
+.toggle-switch.on::after { transform: translateX(22px); }
+.badge-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+.badge-card {
+    text-align: center; padding: 12px 8px; border-radius: 12px;
+    background: #e9ecef; opacity: 0.5; filter: grayscale(1); transition: all 0.3s;
+}
+.badge-card.unlocked { opacity: 1; filter: none; background: linear-gradient(135deg, rgba(255,107,157,0.15), rgba(78,205,196,0.15)); }
+.badge-card .badge-icon { font-size: 2rem; display: block; margin-bottom: 4px; }
+.badge-card .badge-name { font-size: 0.75rem; font-weight: 600; }
+.badge-toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(120%);
+    background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white;
+    padding: 14px 22px; border-radius: 30px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 1100;
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); max-width: 90vw; text-align: center;
+}
+.badge-toast.show { transform: translateX(-50%) translateY(0); }
 .mission-card {
     background: linear-gradient(135deg, #FFE66D 0%, #FFA07A 100%);
-    border-radius: 18px;
-    padding: 20px;
-    margin-bottom: 20px;
-    text-align: center;
-    box-shadow: 0 6px 20px rgba(255, 160, 122, 0.35);
-    cursor: pointer;
-    transition: transform 0.2s ease;
+    border-radius: 18px; padding: 20px; margin-bottom: 20px; text-align: center;
+    box-shadow: 0 6px 20px rgba(255,160,122,0.35); cursor: pointer; transition: transform 0.2s;
 }
 .mission-card:active { transform: scale(0.98); }
-.mission-card .mission-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: rgba(80, 50, 30, 0.7);
-    margin-bottom: 6px;
+.mission-card .mission-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(80,50,30,0.7); margin-bottom: 6px; }
+.mission-card .mission-task { font-size: 1.3rem; font-weight: bold; color: #2C3E50; }
+.mission-card .mission-room { font-size: 0.95rem; color: rgba(80,50,30,0.85); }
+.subheading {
+    background: linear-gradient(90deg, #FFE66D, #4ECDC4); color: white;
+    padding: 8px 15px; margin: 15px 0 5px; border-radius: 20px;
+    font-weight: bold; font-size: 0.9rem; text-align: center;
 }
-.mission-card .mission-task {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #2C3E50;
-    margin-bottom: 4px;
-}
-.mission-card .mission-room {
-    font-size: 0.95rem;
-    color: rgba(80, 50, 30, 0.85);
-}
-
-/* Weather widget */
-.weather-widget {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 12px;
-    padding: 10px 16px;
-    margin-bottom: 16px;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-}
-.weather-widget .weather-icon { font-size: 1.6rem; }
-.weather-widget .weather-tip { font-style: italic; color: var(--text-secondary); }
-
-/* Pull-to-refresh */
+.subheading-text { text-transform: uppercase; letter-spacing: 1px; }
 .pull-container { position: relative; }
 .pull-indicator {
-    text-align: center;
-    padding: 8px;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    height: 0;
-    overflow: hidden;
-    transition: height 0.2s ease;
-    opacity: 0;
+    text-align: center; padding: 8px; color: var(--text-secondary); font-size: 0.85rem;
+    height: 0; overflow: hidden; transition: height 0.2s; opacity: 0;
 }
 .pull-indicator.visible { opacity: 1; }
 .pull-indicator.ready { color: var(--primary); font-weight: 600; }
-
-/* High-five toast */
-.highfive-toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(120%);
-    background: linear-gradient(45deg, #FF6B9D, #4ECDC4);
-    color: white;
-    padding: 14px 22px;
-    border-radius: 30px;
-    font-weight: 600;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    z-index: 1100;
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    max-width: 90vw;
-    text-align: center;
+.modal {
+    display: none; position: fixed; z-index: 1000; inset: 0;
+    background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
 }
-.highfive-toast.show { transform: translateX(-50%) translateY(0); }
-.highfive-toast .hf-emoji { font-size: 1.4rem; margin-right: 6px; }
-
-/* Celebration scene particles */
-.scene-particle {
-    position: fixed;
-    z-index: 1001;
-    pointer-events: none;
-    top: -30px;
+.modal.open { display: flex; }
+.modal-content {
+    background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px;
+    position: relative; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalAppear 0.3s ease;
 }
-@keyframes bubbleRise {
-    0% { transform: translateY(0) scale(0.5); opacity: 0.9; }
-    100% { transform: translateY(110vh) scale(1.3); opacity: 0; }
+@keyframes modalAppear { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes sparkle { 0%,100%{transform:scale(1) rotate(0)} 50%{transform:scale(1.2) rotate(-5deg)} }
+@keyframes confetti { 0%{transform:translateY(-100vh) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+.confetti { position: fixed; width: 10px; height: 10px; top: -10px; z-index: 1001; animation: confetti 3s ease-in-out forwards; }
+.close-modal { position: absolute; right: 20px; top: 15px; font-size: 28px; font-weight: bold; cursor: pointer; color: var(--text-secondary); border: none; background: none; }
+.close-modal:hover { color: var(--primary); }
+.timer-fab {
+    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); right: calc(20px + env(safe-area-inset-right));
+    width: 56px; height: 56px; border-radius: 50%; border: none; font-size: 1.5rem;
+    background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25); cursor: pointer; z-index: 900;
+    transition: transform 0.2s; display: flex; align-items: center; justify-content: center;
 }
-@keyframes leafFall {
-    0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(110vh) rotate(540deg) translateX(80px); opacity: 0; }
-}
-@keyframes sparkleBurst {
-    0% { transform: translateY(0) scale(0); opacity: 1; }
-    50% { transform: translateY(-50px) scale(1.4); opacity: 1; }
-    100% { transform: translateY(-120px) scale(0.6); opacity: 0; }
-}
-.scene-bubble {
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(173,216,230,0.6));
-    border: 1px solid rgba(255,255,255,0.7);
-    animation: bubbleRise 4s ease-in forwards;
-}
-.scene-leaf {
-    font-size: 1.6rem;
-    animation: leafFall 4s linear forwards;
-}
-.scene-sparkle {
-    font-size: 1.4rem;
-    animation: sparkleBurst 2.5s ease-out forwards;
-}
-
-/* Notification settings */
-.notif-permission-banner {
-    background: #FFF3CD;
-    color: #856404;
-    padding: 10px 14px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    font-size: 0.9rem;
-}
-
-/* Lock screen widget info */
-.widget-info-step {
-    background: #F0F4FF;
-    padding: 10px 14px;
-    border-radius: 8px;
-    margin: 8px 0;
-    font-size: 0.95rem;
-}
+.timer-fab:hover { transform: scale(1.08); }
+.timer-fab.running { animation: timerPulse 2s ease-in-out infinite; }
+@keyframes timerPulse { 0%,100%{box-shadow:0 6px 20px rgba(255,107,157,0.4)} 50%{box-shadow:0 6px 30px rgba(255,107,157,0.7)} }
+.timer-modal .timer-ring-wrap { position: relative; width: 200px; height: 200px; margin: 0 auto 20px; }
+.timer-modal .timer-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.timer-modal .timer-track { fill: none; stroke: #eee; stroke-width: 10; }
+.timer-modal .timer-fill { fill: none; stroke: var(--primary); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 565; stroke-dashoffset: 0; transition: stroke-dashoffset 0.3s linear; }
+.timer-modal .timer-fill.break-mode { stroke: var(--secondary); }
+.timer-display { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.timer-display .time-text { font-size: 2.2rem; font-weight: bold; color: var(--primary); }
+.timer-display .mode-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.timer-controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.timer-sessions { font-size: 0.9rem; color: var(--text-secondary); margin-top: 12px; }
+.scene-particle { position: fixed; z-index: 1001; pointer-events: none; top: -30px; }
+@keyframes bubbleRise { 0%{transform:translateY(0) scale(0.5);opacity:0.9} 100%{transform:translateY(110vh) scale(1.3);opacity:0} }
+@keyframes leafFall { 0%{transform:translateY(-30px) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(540deg) translateX(80px);opacity:0} }
+@keyframes sparkleBurst { 0%{transform:translateY(0) scale(0);opacity:1} 50%{transform:translateY(-50px) scale(1.4);opacity:1} 100%{transform:translateY(-120px) scale(0.6);opacity:0} }
+.scene-bubble { border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(173,216,230,0.6)); border: 1px solid rgba(255,255,255,0.7); animation: bubbleRise 4s ease-in forwards; }
+.scene-leaf { font-size: 1.6rem; animation: leafFall 4s linear forwards; }
+.scene-sparkle { font-size: 1.4rem; animation: sparkleBurst 2.5s ease-out forwards; }
+.notif-permission-banner { background: #FFF3CD; color: #856404; padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem; }
+.widget-info-step { background: #F0F4FF; padding: 10px 14px; border-radius: 8px; margin: 8px 0; font-size: 0.95rem; }
 .widget-info-step strong { color: var(--primary); }
-
-/* Responsive design */
+.sync-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+body.time-morning { background: linear-gradient(135deg, #FFB6C1 0%, #FFD580 50%, #FF9A8B 100%); }
+body.time-midday { background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%); }
+body.time-evening { background: linear-gradient(135deg, #614385 0%, #516395 50%, #2C3E50 100%); }
+body.time-night { background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%); color: #ecf0f1; }
+body.time-night header, body.time-night main, body.time-night .nav-tabs { background: rgba(40,45,60,0.92); color: #ecf0f1; }
+body.time-night .tab-button, body.time-night .progress-section h2, body.time-night .room-progress, body.time-night .settings-section { color: #bdc3c7; }
+body.time-night .task-item, body.time-night .settings-section { background: rgba(50,55,70,0.85); }
+body.time-night .room-section { border-color: rgba(255,255,255,0.15); }
+body.time-night .task-text, body.time-night .room-title, body.time-night h2, body.time-night h3 { color: #ecf0f1; }
+body.time-night .task-item.completed .task-text { color: #95a5a6; }
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
-    }
-
-    header {
-        padding: 20px;
-    }
-
-    header h1 {
-        font-size: 2rem;
-    }
-
-    .nav-tabs {
-        flex-direction: column;
-    }
-
-    .tab-button {
-        margin-bottom: 5px;
-    }
-
-    main {
-        padding: 20px;
-    }
-
-    .task-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .task-actions {
-        align-self: flex-end;
-        margin-top: 10px;
-    }
+    .container { padding: 10px; }
+    header { padding: 16px; }
+    header h1 { font-size: 1.6rem; }
+    .nav-tabs { flex-wrap: wrap; }
+    .tab-button { padding: 10px 12px; font-size: 0.85rem; max-width: none; }
+    main { padding: 20px; }
+    .task-item { flex-wrap: wrap; }
+    .task-actions { margin-top: 8px; align-self: flex-end; }
 }
-    </style>
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    .particle-layer { display: none; }
+    .tab-content { transform: none !important; }
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div id="iosInstallHint" class="ios-install-hint">
-            Install on your iPhone: tap <strong>Share</strong> then <strong>Add to Home Screen</strong>.
-            <button type="button" id="dismissInstallHint">Got it</button>
-        </div>
-        <header>
-            <div class="mindi-avatar" id="mindiAvatar">🧹</div>
-            <h1>🌟 Mindi's Cleaning Adventures 🌟</h1>
-            <div id="streakBadge" class="streak-badge zero" style="display: none;">
-                <span>🔥</span><span id="streakCount">0</span><span>week streak</span>
-            </div>
-            <div class="progress-section">
-                <h2>Overall Progress</h2>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="overallProgress"></div>
-                </div>
-                <p id="progressText">Let's get cleaning!</p>
-            </div>
-        </header>
-
-        <nav class="nav-tabs">
-            <button class="tab-button active" data-tab="weekly">This Week's Tasks</button>
-            <button class="tab-button" data-tab="rooms">All Rooms</button>
-            <button class="tab-button" data-tab="baits">Change Baits</button>
-            <button class="tab-button" data-tab="settings">Settings</button>
-        </nav>
-
-        <main>
-            <div id="weeklyTab" class="tab-content active">
-                <h2>This Week's Suggested Tasks</h2>
-                <div id="weatherWidget" class="weather-widget" style="display: none;">
-                    <span class="weather-icon" id="weatherIcon">☀️</span>
-                    <span id="weatherText">Loading weather...</span>
-                    <span class="weather-tip" id="weatherTip"></span>
-                </div>
-                <div id="missionCard" class="mission-card" style="display: none;">
-                    <div class="mission-label">Today's Mission</div>
-                    <div class="mission-task" id="missionTask"></div>
-                    <div class="mission-room" id="missionRoom"></div>
-                </div>
-                <div class="progress-section" style="margin-bottom: 20px;">
-                    <h3>Weekly Progress</h3>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="weeklyProgress" style="background: linear-gradient(90deg, #4ECDC4, #FFE66D);"></div>
-                    </div>
-                    <p id="weeklyProgressText" style="color: #4ECDC4; font-weight: bold;">Complete your weekly tasks!</p>
-                </div>
-                <div class="pull-container">
-                    <div id="pullIndicator" class="pull-indicator">Pull down to refresh</div>
-                    <div id="weeklyTasks" class="task-list">
-                        <!-- Weekly tasks will be populated here -->
-                    </div>
-                </div>
-                <button id="refreshWeekly" class="refresh-btn">🎲 Get New Weekly Tasks</button>
-            </div>
-
-            <div id="roomsTab" class="tab-content">
-                <h2>All Cleaning Tasks</h2>
-                <div id="roomList" class="room-list">
-                    <!-- Rooms will be populated here -->
-                </div>
-            </div>
-
-            <div id="baitsTab" class="tab-content">
-                <h2>Change Baits</h2>
-                <p style="text-align: center; margin-bottom: 20px; color: #666;">Check off rooms as you change the baits. This helps you keep track of which areas you've done.</p>
-                <div id="baitsList" class="room-list">
-                    <!-- Baits will be populated here -->
-                </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <button id="resetBaits" class="action-btn">🔄 Reset All Bait Checks</button>
-                </div>
-            </div>
-
-            <div id="settingsTab" class="tab-content">
-                <h2>Settings</h2>
-                <div class="settings-section">
-                    <h3>Manage Tasks</h3>
-                    <button id="addRoom" class="action-btn">➕ Add New Room/Area</button>
-                    <div id="taskEditor" class="task-editor">
-                        <!-- Task editing interface -->
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3>Device Sync</h3>
-                    <p style="margin-bottom: 10px; color: var(--text-secondary);">Keep iPhone and iPad in sync with a shared household code.</p>
-                    <div id="syncNotConfigured">
-                        <div class="sync-actions">
-                            <button id="createHousehold" class="action-btn">Create Household</button>
-                            <input type="text" id="joinCodeInput" class="sync-input" maxlength="6" placeholder="CODE" autocomplete="off">
-                            <button id="joinHousehold" class="action-btn">Join Household</button>
-                        </div>
-                    </div>
-                    <div id="syncConfigured" style="display: none;">
-                        <p>Household code: <span id="householdCodeDisplay" class="sync-code-display"></span></p>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Share this code with your other device, then tap Join on that device.</p>
-                        <div class="sync-actions">
-                            <button id="syncNow" class="action-btn">Sync Now</button>
-                            <button id="leaveHousehold" class="action-btn danger">Leave Household</button>
-                        </div>
-                    </div>
-                    <p id="syncStatus" class="sync-status">Not synced</p>
-                </div>
-                <div class="settings-section">
-                    <h3>Notifications</h3>
-                    <div id="notifPermissionBanner" class="notif-permission-banner" style="display: none;">
-                        Enable notifications for monthly recaps and streak reminders.
-                        <button id="enableNotifs" class="action-btn" style="font-size: 0.8rem; padding: 4px 10px; margin-left: 8px;">Enable</button>
-                    </div>
-                    <p id="notifStatus" style="font-size: 0.9rem; color: var(--text-secondary);"></p>
-                    <div class="sync-actions">
-                        <button id="testNotif" class="action-btn">Test Notification</button>
-                        <button id="showRecap" class="action-btn">View Monthly Recap</button>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3>Lock Screen Widget (iOS)</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">Add a cleaning progress widget to your iPhone lock screen using the Shortcuts app:</p>
-                    <div class="widget-info-step"><strong>1.</strong> Open the <strong>Shortcuts</strong> app on iPhone</div>
-                    <div class="widget-info-step"><strong>2.</strong> Tap <strong>+</strong> → search <strong>Safari</strong> → "Open URL"</div>
-                    <div class="widget-info-step"><strong>3.</strong> Set URL to: <code>https://scottysadler-pixel.github.io/mindi-cleaning/</code></div>
-                    <div class="widget-info-step"><strong>4.</strong> Save as "Open Mindi". Long-press lock screen → <strong>Add Widgets</strong> → pick <strong>Shortcuts</strong> widget → choose "Open Mindi"</div>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">Now you can jump straight into the app from your lock screen with one tap.</p>
-                </div>
-                <div class="settings-section">
-                    <h3>Backup</h3>
-                    <div class="sync-actions">
-                        <button id="exportData" class="action-btn">Export JSON</button>
-                        <button id="importData" class="action-btn">Import JSON</button>
-                        <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;">
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3>Reset Options</h3>
-                    <button id="resetWeek" class="action-btn">🔄 Reset Weekly Progress</button>
-                    <button id="resetAll" class="action-btn danger">⚠️ Reset All Progress</button>
-                </div>
-            </div>
-        </main>
+<div class="particle-layer" id="particleLayer" aria-hidden="true"></div>
+<div class="container">
+    <div id="iosInstallHint" class="ios-install-hint">
+        Install on your iPhone: tap <strong>Share</strong> then <strong>Add to Home Screen</strong>.
+        <button type="button" id="dismissInstallHint">Got it</button>
     </div>
-
-    <!-- Modal for congratulations -->
-    <div id="congratsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div id="congratsContent">
-                <!-- Congratulatory content -->
+    <header>
+        <div class="header-top">
+            <svg class="mindi-mascot idle" id="mindiMascot" viewBox="0 0 80 80" aria-hidden="true">
+                <ellipse cx="40" cy="62" rx="22" ry="6" fill="rgba(0,0,0,0.1)"/>
+                <rect x="34" y="18" width="12" height="38" rx="4" fill="#8B6914"/>
+                <rect x="30" y="14" width="20" height="8" rx="3" fill="#A67C00"/>
+                <line x1="40" y1="18" x2="40" y2="56" stroke="#6B4F0A" stroke-width="2"/>
+                <ellipse cx="40" cy="30" rx="18" ry="16" fill="#FFE4B5"/>
+                <circle class="mascot-eye" cx="33" cy="28" r="3" fill="#2C3E50"/>
+                <circle class="mascot-eye" cx="47" cy="28" r="3" fill="#2C3E50"/>
+                <circle cx="34" cy="27" r="1" fill="white"/>
+                <circle cx="48" cy="27" r="1" fill="white"/>
+                <path class="mascot-smile" d="M33 36 Q40 42 47 36" fill="none" stroke="#2C3E50" stroke-width="2" stroke-linecap="round"/>
+                <path d="M18 20 Q10 8 6 4" stroke="#8B6914" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M18 22 Q8 14 4 18" stroke="#A67C00" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </svg>
+            <h1>Mindi's Cleaning Adventures</h1>
+            <div id="streakBadge" class="streak-badge zero">
+                <span>&#128293;</span><span id="streakCount">0</span><span>week streak</span>
             </div>
         </div>
+        <div class="progress-section">
+            <h2>Overall Progress</h2>
+            <div class="progress-ring-wrap">
+                <svg class="progress-ring" viewBox="0 0 100 100">
+                    <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--success)"/><stop offset="100%" stop-color="var(--accent)"/></linearGradient></defs>
+                    <circle class="ring-track" cx="50" cy="50" r="45"/>
+                    <circle class="ring-fill" id="overallRing" cx="50" cy="50" r="45"/>
+                </svg>
+                <div class="progress-ring-text" id="overallRingText">0%</div>
+            </div>
+            <p id="progressText">Let's get cleaning!</p>
+        </div>
+    </header>
+    <nav class="nav-tabs" id="navTabs">
+        <span class="tab-indicator" id="tabIndicator"></span>
+        <button class="tab-button active" data-tab="weekly">This Week</button>
+        <button class="tab-button" data-tab="rooms">All Rooms</button>
+        <button class="tab-button" data-tab="baits">Baits</button>
+        <button class="tab-button" data-tab="settings">Settings</button>
+    </nav>
+    <main>
+        <div id="weeklyTab" class="tab-content active">
+            <h2>This Week's Suggested Tasks</h2>
+            <div id="missionCard" class="mission-card" style="display:none">
+                <div class="mission-label">Today's Mission</div>
+                <div class="mission-task" id="missionTask"></div>
+                <div class="mission-room" id="missionRoom"></div>
+            </div>
+            <div class="progress-section" style="margin-bottom:20px">
+                <h3>Weekly Progress</h3>
+                <div class="progress-ring-wrap lg">
+                    <svg class="progress-ring" viewBox="0 0 100 100">
+                        <circle class="ring-track" cx="50" cy="50" r="45"/>
+                        <circle class="ring-fill" id="weeklyRing" cx="50" cy="50" r="45" style="stroke:url(#ringGrad2)"/>
+                        <defs><linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#4ECDC4"/><stop offset="100%" stop-color="#FFE66D"/></linearGradient></defs>
+                    </svg>
+                    <div class="progress-ring-text" id="weeklyRingText">0%</div>
+                </div>
+                <p id="weeklyProgressText" style="color:var(--secondary);font-weight:bold">Complete your weekly tasks!</p>
+            </div>
+            <div class="pull-container">
+                <div id="pullIndicator" class="pull-indicator">Pull down to refresh</div>
+                <div id="weeklyTasks" class="task-list"></div>
+            </div>
+            <button id="refreshWeekly" class="refresh-btn">Get New Weekly Tasks</button>
+        </div>
+        <div id="roomsTab" class="tab-content"><h2>All Cleaning Tasks</h2><div id="roomList" class="room-list"></div></div>
+        <div id="baitsTab" class="tab-content">
+            <h2>Change Baits</h2>
+            <p style="text-align:center;margin-bottom:20px;color:#666">Check off rooms as you change the baits.</p>
+            <div id="baitsList" class="room-list"></div>
+            <div style="text-align:center;margin-top:20px"><button id="resetBaits" class="action-btn">Reset All Bait Checks</button></div>
+        </div>
+        <div id="settingsTab" class="tab-content">
+            <h2>Settings</h2>
+            <div class="settings-section">
+                <h3>Manage Tasks</h3>
+                <button id="addRoom" class="action-btn">Add New Room/Area</button>
+                <div id="taskEditor" class="task-editor"></div>
+            </div>
+            <div class="settings-section">
+                <h3>Theme</h3>
+                <div class="theme-swatches" id="themeSwatches">
+                    <button class="theme-swatch auto active" data-theme="auto" aria-label="Auto theme"><span>Auto</span></button>
+                    <button class="theme-swatch sunset" data-theme="sunset" aria-label="Sunset theme"><span>Sunset</span></button>
+                    <button class="theme-swatch ocean" data-theme="ocean" aria-label="Ocean theme"><span>Ocean</span></button>
+                    <button class="theme-swatch forest" data-theme="forest" aria-label="Forest theme"><span>Forest</span></button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Achievements</h3>
+                <div id="badgeGallery" class="badge-gallery"></div>
+            </div>
+            <div class="settings-section">
+                <h3>Sounds</h3>
+                <div class="toggle-row">
+                    <span>Sound effects</span>
+                    <button class="toggle-switch" id="soundsToggle" aria-label="Toggle sounds"></button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Notifications</h3>
+                <div id="notifPermissionBanner" class="notif-permission-banner" style="display:none">
+                    Enable notifications for monthly recaps.
+                    <button id="enableNotifs" class="action-btn" style="font-size:0.8rem;padding:4px 10px;margin-left:8px">Enable</button>
+                </div>
+                <p id="notifStatus" style="font-size:0.9rem;color:var(--text-secondary)"></p>
+                <div class="sync-actions">
+                    <button id="testNotif" class="action-btn">Test Notification</button>
+                    <button id="showRecap" class="action-btn">View Monthly Recap</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Lock Screen Widget (iOS)</h3>
+                <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:10px">Add a cleaning progress widget via Shortcuts:</p>
+                <div class="widget-info-step"><strong>1.</strong> Open <strong>Shortcuts</strong> on iPhone</div>
+                <div class="widget-info-step"><strong>2.</strong> Tap <strong>+</strong> &rarr; search <strong>Safari</strong> &rarr; Open URL</div>
+                <div class="widget-info-step"><strong>3.</strong> URL: <code>https://scottysadler-pixel.github.io/mindi-cleaning/</code></div>
+                <div class="widget-info-step"><strong>4.</strong> Save as "Open Mindi". Long-press lock screen &rarr; <strong>Add Widgets</strong> &rarr; Shortcuts &rarr; "Open Mindi"</div>
+            </div>
+            <div class="settings-section">
+                <h3>Backup</h3>
+                <div class="sync-actions">
+                    <button id="exportData" class="action-btn">Export JSON</button>
+                    <button id="importData" class="action-btn">Import JSON</button>
+                    <input type="file" id="importFileInput" accept=".json,application/json" style="display:none">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Reset Options</h3>
+                <button id="resetWeek" class="action-btn">Reset Weekly Progress</button>
+                <button id="resetAll" class="action-btn danger">Reset All Progress</button>
+            </div>
+        </div>
+    </main>
+</div>
+<button class="timer-fab" id="timerFab" aria-label="Open cleaning timer">&#9201;&#65039;</button>
+<div id="timerModal" class="modal timer-modal">
+    <div class="modal-content">
+        <button class="close-modal" id="closeTimer">&times;</button>
+        <h2>Cleaning Timer</h2>
+        <div class="timer-ring-wrap">
+            <svg class="timer-ring" viewBox="0 0 200 200">
+                <circle class="timer-track" cx="100" cy="100" r="90"/>
+                <circle class="timer-fill" id="timerRing" cx="100" cy="100" r="90"/>
+            </svg>
+            <div class="timer-display">
+                <span class="time-text" id="timerDisplay">25:00</span>
+                <span class="mode-label" id="timerModeLabel">Focus</span>
+            </div>
+        </div>
+        <div class="timer-controls">
+            <button class="action-btn" id="timerStartPause">Start</button>
+            <button class="action-btn" id="timerReset">Reset</button>
+            <button class="toggle-switch" id="ambientToggle" aria-label="Ambient noise"></button>
+            <span style="font-size:0.85rem;color:var(--text-secondary)">Ambient</span>
+        </div>
+        <p class="timer-sessions">Sessions today: <strong id="sessionCount">0</strong></p>
     </div>
-
-    <script>
-// Cloudflare Worker URL — update after running `npx wrangler deploy` in the worker/ folder
-const SYNC_API_URL = 'https://mindi-cleaning-sync.mindi-clean.workers.dev';
-
-// Haptic feedback helper (no-op on devices without vibration support)
+</div>
+<div id="congratsModal" class="modal"><div class="modal-content"><button class="close-modal" id="closeCongrats">&times;</button><div id="congratsContent"></div></div></div>
+<div id="badgeToast" class="badge-toast" role="status" aria-live="polite"></div>
+<script>
 const Haptics = {
     light() { if (navigator.vibrate) navigator.vibrate(10); },
     medium() { if (navigator.vibrate) navigator.vibrate(20); },
@@ -927,31 +529,70 @@ const Haptics = {
     success() { if (navigator.vibrate) navigator.vibrate([10, 40, 20, 40, 60]); },
 };
 
-// IndexedDB key-value storage (replaces localStorage for iOS standalone reliability)
-const Storage = {
-    dbName: 'mindi-cleaning-db',
-    storeName: 'kv',
-    db: null,
-
-    async init() {
-        await this.openDb();
-        await this.migrateFromLocalStorage();
+const Sounds = {
+    ctx: null, enabled: true,
+    init() {
+        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
     },
+    setEnabled(v) { this.enabled = v; },
+    tone(freq, dur, type = 'sine', vol = 0.15) {
+        if (!this.enabled) return;
+        this.init();
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = type; o.frequency.value = freq;
+        g.gain.setValueAtTime(vol, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(); o.stop(this.ctx.currentTime + dur);
+    },
+    check() { this.tone(660, 0.08, 'sine', 0.12); },
+    roomComplete() { [523, 659, 784].forEach((f, i) => setTimeout(() => this.tone(f, 0.15, 'triangle', 0.1), i * 80)); },
+    weeklyComplete() { [392, 494, 587, 784].forEach((f, i) => setTimeout(() => this.tone(f, 0.2, 'sine', 0.12), i * 100)); },
+    badge() { [880, 1100, 1320].forEach((f, i) => setTimeout(() => this.tone(f, 0.12, 'sine', 0.1), i * 60)); },
+};
 
+const ROOM_ICONS = {
+    'Bedroom': '<svg class="room-icon bedroom-star" viewBox="0 0 32 32"><rect x="4" y="14" width="24" height="14" rx="2" fill="#E8D5B7"/><polygon points="16,4 28,14 4,14" fill="#FF6B9D"/><text class="star" x="22" y="10" font-size="8">&#9733;</text></svg>',
+    'Lounge Room': '<svg class="room-icon" viewBox="0 0 32 32"><rect x="4" y="16" width="24" height="10" rx="3" fill="#4ECDC4"/><rect x="6" y="10" width="8" height="8" rx="2" fill="#FFE66D"/></svg>',
+    'Laundry': '<svg class="room-icon" viewBox="0 0 32 32"><rect x="8" y="4" width="16" height="24" rx="3" fill="#ddd"/><circle cx="16" cy="18" r="6" fill="none" stroke="#4ECDC4" stroke-width="2"/><circle cx="16" cy="18" r="2" fill="#4ECDC4"/></svg>',
+    'Entries/Treadmill Area': '<svg class="room-icon" viewBox="0 0 32 32"><rect x="6" y="20" width="20" height="4" rx="1" fill="#888"/><ellipse cx="16" cy="14" rx="10" ry="6" fill="none" stroke="#FF6B9D" stroke-width="2"/></svg>',
+    'Dining/Family Room': '<svg class="room-icon" viewBox="0 0 32 32"><ellipse cx="16" cy="20" rx="12" ry="6" fill="#8B6914"/><rect x="14" y="8" width="4" height="12" fill="#A67C00"/></svg>',
+    'Kitchen': '<svg class="room-icon kitchen-steam" viewBox="0 0 32 32"><rect x="4" y="12" width="24" height="16" rx="2" fill="#ccc"/><circle class="steam" cx="10" cy="8" r="2" fill="#aaa" opacity="0.5"/><circle class="steam" cx="16" cy="6" r="2" fill="#aaa" opacity="0.5"/><circle class="steam" cx="22" cy="8" r="2" fill="#aaa" opacity="0.5"/></svg>',
+    'Sewing Room': '<svg class="room-icon" viewBox="0 0 32 32"><path d="M8 24 L24 8" stroke="#FF6B9D" stroke-width="2"/><circle cx="20" cy="12" r="4" fill="#FFE66D"/></svg>',
+    'Toilet': '<svg class="room-icon bath-bubbles" viewBox="0 0 32 32"><ellipse cx="16" cy="22" rx="8" ry="6" fill="#E0F7FA"/><circle class="bubble" cx="12" cy="10" r="3" fill="#4ECDC4" opacity="0.6"/><circle class="bubble" cx="20" cy="8" r="2" fill="#4ECDC4" opacity="0.6"/></svg>',
+    'Bathroom': '<svg class="room-icon bath-bubbles" viewBox="0 0 32 32"><rect x="6" y="14" width="20" height="12" rx="2" fill="#B2EBF2"/><circle class="bubble" cx="10" cy="8" r="3" fill="#81D4FA"/><circle class="bubble" cx="22" cy="10" r="2" fill="#81D4FA"/></svg>',
+    'Kiddies Room': '<svg class="room-icon bedroom-star" viewBox="0 0 32 32"><rect x="6" y="12" width="20" height="14" rx="2" fill="#FFD1DC"/><text class="star" x="20" y="10" font-size="10">&#9733;</text></svg>',
+    'Guestroom': '<svg class="room-icon" viewBox="0 0 32 32"><rect x="8" y="10" width="16" height="16" rx="2" fill="#E8EAF6"/><rect x="10" y="14" width="12" height="6" fill="#C5CAE9"/></svg>',
+    'Outside - Entry': '<svg class="room-icon outside-leaf" viewBox="0 0 32 32"><path class="leaf" d="M16 28 Q4 20 8 8 Q16 4 24 8 Q28 20 16 28" fill="#7BC96F"/><line x1="16" y1="28" x2="16" y2="10" stroke="#56ab2f" stroke-width="1"/></svg>',
+};
+
+const BADGES = [
+    { id: 'first_task', name: 'First Step', icon: '👣', check: (app) => Object.keys(app.completedTasks).length >= 1 },
+    { id: 'five_tasks', name: 'Getting Warm', icon: '🔥', check: (app) => Object.keys(app.completedTasks).length >= 5 },
+    { id: 'ten_tasks', name: 'On a Roll', icon: '⭐', check: (app) => Object.keys(app.completedTasks).length >= 10 },
+    { id: 'room_complete', name: 'Room Hero', icon: '🏠', check: (app) => Object.keys(app.tasks).some(r => app.isRoomComplete(r)) },
+    { id: 'all_rooms', name: 'Whole House', icon: '🏆', check: (app) => Object.keys(app.tasks).every(r => app.isRoomComplete(r)) },
+    { id: 'weekly_done', name: 'Week Winner', icon: '🎯', check: (app) => app.weeklyTasks.length > 0 && app.weeklyTasks.every(t => app.isTaskCompleted(t.id)) },
+    { id: 'streak_2', name: '2-Week Streak', icon: '💪', check: (app) => (app.streak?.count || 0) >= 2 },
+    { id: 'streak_4', name: 'Monthly Master', icon: '🌟', check: (app) => (app.streak?.count || 0) >= 4 },
+    { id: 'bait_master', name: 'Bait Boss', icon: '🪤', check: (app) => Object.keys(app.tasks).filter(r => app.tasks[r].baits > 0).every(r => app.isTaskCompleted('bait-' + r)) },
+    { id: 'kitchen_queen', name: 'Kitchen Queen', icon: '👑', check: (app) => app.isRoomComplete('Kitchen') },
+    { id: 'speed_day', name: 'Power Day', icon: '⚡', check: (app) => app.countCompletedToday() >= 5 },
+    { id: 'timer_3', name: 'Focus Flow', icon: '⏱️', check: (app) => (app.timerSessions?.today || 0) >= 3 },
+];
+
+const Storage = {
+    dbName: 'mindi-cleaning-db', storeName: 'kv', db: null,
+    async init() { await this.openDb(); await this.migrateFromLocalStorage(); },
     openDb() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, 1);
-            request.onupgradeneeded = () => {
-                request.result.createObjectStore(this.storeName);
-            };
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve();
-            };
-            request.onerror = () => reject(request.error);
+            const req = indexedDB.open(this.dbName, 1);
+            req.onupgradeneeded = () => req.result.createObjectStore(this.storeName);
+            req.onsuccess = () => { this.db = req.result; resolve(); };
+            req.onerror = () => reject(req.error);
         });
     },
-
     async get(key) {
         return new Promise((resolve, reject) => {
             const tx = this.db.transaction(this.storeName, 'readonly');
@@ -960,7 +601,6 @@ const Storage = {
             req.onerror = () => reject(req.error);
         });
     },
-
     async set(key, value) {
         return new Promise((resolve, reject) => {
             const tx = this.db.transaction(this.storeName, 'readwrite');
@@ -969,7 +609,6 @@ const Storage = {
             tx.onerror = () => reject(tx.error);
         });
     },
-
     async remove(key) {
         return new Promise((resolve, reject) => {
             const tx = this.db.transaction(this.storeName, 'readwrite');
@@ -978,209 +617,206 @@ const Storage = {
             tx.onerror = () => reject(tx.error);
         });
     },
-
     async migrateFromLocalStorage() {
-        const keys = ['cleaningTasks', 'completedTasks', 'weeklyTasks', 'hasVisited', 'householdCode', 'taskMeta', 'roomMeta'];
+        const keys = ['cleaningTasks', 'completedTasks', 'weeklyTasks', 'hasVisited', 'streak', 'badges', 'theme', 'soundsEnabled', 'timerSessions', 'installHintDismissed', 'lastRecapMonth'];
         for (const key of keys) {
             const legacy = localStorage.getItem(key);
             if (legacy === null) continue;
-            const existing = await this.get(key);
-            if (existing === null) {
-                try {
-                    await this.set(key, JSON.parse(legacy));
-                } catch {
-                    await this.set(key, legacy);
-                }
+            if ((await this.get(key)) === null) {
+                try { await this.set(key, JSON.parse(legacy)); } catch { await this.set(key, legacy); }
             }
             localStorage.removeItem(key);
         }
     }
 };
 
-class SyncClient {
-    constructor(app) {
-        this.app = app;
-        this.householdCode = null;
-        this.pollTimer = null;
-        this.pushTimer = null;
-        this.syncing = false;
-        this.lastSyncAt = null;
-    }
-
-    async init() {
-        this.householdCode = await Storage.get('householdCode');
-        this.updateUI();
-        if (this.householdCode) {
-            this.startPolling();
-            await this.sync();
-        }
-    }
-
-    updateUI() {
-        const configured = document.getElementById('syncConfigured');
-        const notConfigured = document.getElementById('syncNotConfigured');
-        const codeDisplay = document.getElementById('householdCodeDisplay');
-
-        if (this.householdCode) {
-            configured.style.display = 'block';
-            notConfigured.style.display = 'none';
-            codeDisplay.textContent = this.householdCode;
-        } else {
-            configured.style.display = 'none';
-            notConfigured.style.display = 'block';
-        }
-    }
-
-    setStatus(message, type = '') {
-        const el = document.getElementById('syncStatus');
-        el.textContent = message;
-        el.className = 'sync-status' + (type ? ` ${type}` : '');
-    }
-
-    formatSyncTime(date) {
-        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-
-    async createHousehold() {
-        if (SYNC_API_URL.includes('YOUR-SUBDOMAIN')) {
-            this.setStatus('Set SYNC_API_URL in index.html after deploying the Worker', 'error');
-            return;
-        }
-        try {
-            this.setStatus('Creating household...');
-            const res = await fetch(`${SYNC_API_URL}/create`, { method: 'POST' });
-            if (!res.ok) throw new Error('Create failed');
-            const { code } = await res.json();
-            this.householdCode = code;
-            await Storage.set('householdCode', code);
-            this.updateUI();
-            this.startPolling();
-            await this.sync();
-            this.setStatus(`Household created! Code: ${code}`, 'synced');
-        } catch (err) {
-            this.setStatus('Could not create household. Check SYNC_API_URL.', 'error');
-            console.error(err);
-        }
-    }
-
-    async joinHousehold(code) {
-        code = (code || '').trim().toUpperCase();
-        if (!/^[A-Z0-9]{6}$/.test(code)) {
-            this.setStatus('Enter a valid 6-character code', 'error');
-            return;
-        }
-        try {
-            this.setStatus('Joining household...');
-            const res = await fetch(`${SYNC_API_URL}/state/${code}`);
-            if (!res.ok) throw new Error('Household not found');
-            const remote = await res.json();
-            this.householdCode = code;
-            await Storage.set('householdCode', code);
-            this.app.applySyncState(remote);
-            this.updateUI();
-            this.startPolling();
-            await this.sync();
-            this.setStatus('Joined and synced!', 'synced');
-        } catch (err) {
-            this.setStatus('Could not join. Check the code and SYNC_API_URL.', 'error');
-            console.error(err);
-        }
-    }
-
-    async leaveHousehold() {
-        if (!confirm('Leave this household? This device will stop syncing.')) return;
-        this.stopPolling();
-        this.householdCode = null;
-        await Storage.remove('householdCode');
-        this.updateUI();
-        this.setStatus('Left household');
-    }
-
-    startPolling() {
-        this.stopPolling();
-        this.pollTimer = setInterval(() => this.sync(), 30000);
-        document.addEventListener('visibilitychange', this.onVisibilityChange);
-    }
-
-    stopPolling() {
-        if (this.pollTimer) clearInterval(this.pollTimer);
-        this.pollTimer = null;
-        document.removeEventListener('visibilitychange', this.onVisibilityChange);
-    }
-
-    onVisibilityChange = () => {
-        if (document.visibilityState === 'visible' && this.householdCode) {
-            this.sync();
-        }
+function animateCount(el, to, suffix = '%') {
+    if (!el) return;
+    const from = parseInt(el.dataset.val || '0', 10) || 0;
+    const start = performance.now(), dur = 500;
+    const step = (now) => {
+        const p = Math.min(1, (now - start) / dur);
+        const v = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+        el.textContent = v + suffix;
+        el.dataset.val = v;
+        if (p < 1) requestAnimationFrame(step);
     };
+    requestAnimationFrame(step);
+}
 
-    scheduleSync() {
-        if (!this.householdCode) return;
-        if (this.pushTimer) clearTimeout(this.pushTimer);
-        this.pushTimer = setTimeout(() => this.sync(), 1000);
-    }
+function setRingProgress(ringEl, pct) {
+    if (!ringEl) return;
+    const circ = 2 * Math.PI * 45;
+    ringEl.style.strokeDasharray = circ;
+    ringEl.style.strokeDashoffset = circ - (pct / 100) * circ;
+}
 
-    async sync() {
-        if (!this.householdCode || this.syncing) return;
-        this.syncing = true;
-        try {
-            const res = await fetch(`${SYNC_API_URL}/state/${this.householdCode}`);
-            if (!res.ok) throw new Error('Fetch failed');
-            const remote = await res.json();
-            this.app.mergeRemoteState(remote);
-
-            const localState = this.app.getSyncState();
-            const putRes = await fetch(`${SYNC_API_URL}/state/${this.householdCode}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(localState),
-            });
-            if (!putRes.ok) throw new Error('Push failed');
-            const merged = await putRes.json();
-            this.app.applySyncState(merged, { skipPush: true });
-
-            this.lastSyncAt = new Date();
-            this.setStatus(`Synced ${this.formatSyncTime(this.lastSyncAt)}`, 'synced');
-        } catch (err) {
-            this.setStatus('Sync failed — will retry', 'error');
-            console.error(err);
-        } finally {
-            this.syncing = false;
-        }
+function spawnParticles() {
+    const layer = document.getElementById('particleLayer');
+    if (!layer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    for (let i = 0; i < 15; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.setProperty('--dur', (14 + Math.random() * 12) + 's');
+        p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+        p.style.animationDelay = (Math.random() * 14) + 's';
+        layer.appendChild(p);
     }
 }
 
+class CleaningTimer {
+    constructor(app) {
+        this.app = app;
+        this.focusSec = 25 * 60;
+        this.breakSec = 5 * 60;
+        this.remaining = this.focusSec;
+        this.mode = 'focus';
+        this.running = false;
+        this.interval = null;
+        this.ambientNode = null;
+        this.ambientGain = null;
+        this.ambientOn = false;
+        this.ringCirc = 2 * Math.PI * 90;
+    }
+    async loadSessions() {
+        const data = (await Storage.get('timerSessions')) || { today: 0, date: '' };
+        const today = new Date().toDateString();
+        if (data.date !== today) { data.today = 0; data.date = today; }
+        this.sessions = data;
+        this.updateSessionUI();
+    }
+    async saveSessions() { await Storage.set('timerSessions', this.sessions); }
+    updateSessionUI() {
+        const el = document.getElementById('sessionCount');
+        if (el) el.textContent = this.sessions?.today || 0;
+    }
+    format(sec) {
+        const m = Math.floor(sec / 60), s = sec % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    updateUI() {
+        document.getElementById('timerDisplay').textContent = this.format(this.remaining);
+        document.getElementById('timerModeLabel').textContent = this.mode === 'focus' ? 'Focus' : 'Break';
+        const ring = document.getElementById('timerRing');
+        const total = this.mode === 'focus' ? this.focusSec : this.breakSec;
+        const pct = 1 - this.remaining / total;
+        ring.style.strokeDasharray = this.ringCirc;
+        ring.style.strokeDashoffset = this.ringCirc * (1 - pct);
+        ring.classList.toggle('break-mode', this.mode === 'break');
+        document.getElementById('timerFab').classList.toggle('running', this.running);
+        document.getElementById('timerStartPause').textContent = this.running ? 'Pause' : 'Start';
+    }
+    start() {
+        Sounds.init();
+        if (this.running) return;
+        this.running = true;
+        this.interval = setInterval(() => {
+            this.remaining--;
+            if (this.remaining <= 0) this.onComplete();
+            this.updateUI();
+        }, 1000);
+        this.updateUI();
+    }
+    pause() {
+        this.running = false;
+        clearInterval(this.interval);
+        this.updateUI();
+    }
+    reset() {
+        this.pause();
+        this.mode = 'focus';
+        this.remaining = this.focusSec;
+        this.updateUI();
+    }
+    onComplete() {
+        this.pause();
+        if (this.mode === 'focus') {
+            this.sessions.today++;
+            this.sessions.date = new Date().toDateString();
+            this.saveSessions();
+            this.app.timerSessions = this.sessions;
+            this.app.checkBadges();
+            this.updateSessionUI();
+            Haptics.success();
+            this.mode = 'break';
+            this.remaining = this.breakSec;
+        } else {
+            this.mode = 'focus';
+            this.remaining = this.focusSec;
+        }
+        this.updateUI();
+    }
+    toggleAmbient() {
+        Sounds.init();
+        this.ambientOn = !this.ambientOn;
+        document.getElementById('ambientToggle').classList.toggle('on', this.ambientOn);
+        if (this.ambientOn) this.startAmbient(); else this.stopAmbient();
+    }
+    startAmbient() {
+        const ctx = Sounds.ctx;
+        if (!ctx) return;
+        const bufferSize = 2 * ctx.sampleRate;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        this.ambientNode = ctx.createBufferSource();
+        this.ambientNode.buffer = buffer;
+        this.ambientNode.loop = true;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.value = 400;
+        this.ambientGain = ctx.createGain();
+        this.ambientGain.gain.value = 0.04;
+        this.ambientNode.connect(filter);
+        filter.connect(this.ambientGain);
+        this.ambientGain.connect(ctx.destination);
+        this.ambientNode.start();
+    }
+    stopAmbient() {
+        if (this.ambientNode) { try { this.ambientNode.stop(); } catch {} this.ambientNode = null; }
+    }
+    open() { document.getElementById('timerModal').classList.add('open'); this.updateUI(); }
+    close() { document.getElementById('timerModal').classList.remove('open'); }
+}
 class CleaningApp {
     constructor() {
         this.currentWeek = this.getCurrentWeek();
         this.tasks = {};
         this.completedTasks = {};
         this.weeklyTasks = [];
-        this.taskMeta = {};
-        this.roomMeta = {};
-        this.syncClient = null;
+        this.streak = { count: 0, lastWeek: null };
+        this.badges = { unlocked: [], unlockedAt: {} };
+        this.theme = 'auto';
+        this.timer = null;
+        this.timerSessions = { today: 0, date: '' };
+        this._currentTab = 'weekly';
+        this._currentMission = null;
     }
 
     async init() {
         this.tasks = await this.loadTasks();
         this.completedTasks = await this.loadCompletedTasks();
         this.weeklyTasks = await this.loadWeeklyTasks();
-        this.taskMeta = (await Storage.get('taskMeta')) || {};
-        this.roomMeta = (await Storage.get('roomMeta')) || {};
         this.streak = (await Storage.get('streak')) || { count: 0, lastWeek: null };
-        this.highFivesSeen = (await Storage.get('highFivesSeen')) || [];
-        this.highFives = (await Storage.get('highFives')) || [];
+        this.badges = (await Storage.get('badges')) || { unlocked: [], unlockedAt: {} };
+        this.theme = (await Storage.get('theme')) || 'auto';
         this.lastRecapMonth = (await Storage.get('lastRecapMonth')) || null;
-        this.ensureRoomTimestamps();
-
-        this.syncClient = new SyncClient(this);
+        const soundsOn = await Storage.get('soundsEnabled');
+        Sounds.setEnabled(soundsOn !== false);
+        this.timer = new CleaningTimer(this);
+        await this.timer.loadSessions();
+        this.timerSessions = this.timer.sessions;
         this.setupEventListeners();
-        this.applyTimeOfDay();
+        this.applyTheme();
         this.startAvatarWatcher();
+        spawnParticles();
         this.renderRooms();
         this.renderWeeklyTasks();
         this.renderBaits();
         this.renderMission();
+        this.renderBadgeGallery();
+        this.updateSoundsToggle();
+        this.updateThemeSwatches();
         this.updateOverallProgress();
         this.updateWeeklyProgress();
         this.updateStreakBadge();
@@ -1189,461 +825,198 @@ class CleaningApp {
         this.setupIosInstallHint();
         this.setupNotifications();
         this.setupPullToRefresh();
-        this.loadWeather();
         this.maybeShowMonthlyRecap();
-        await this.syncClient.init();
-        setInterval(() => this.applyTimeOfDay(), 60 * 1000);
-    }
-
-    ensureRoomTimestamps() {
-        const now = Date.now();
-        Object.keys(this.tasks).forEach((room) => {
-            if (!this.tasks[room].updatedAt) {
-                this.tasks[room].updatedAt = now;
-            }
-        });
-    }
-
-    touchTaskMeta(room, task, { deleted = false } = {}) {
-        const id = `${room}-${task}`;
-        const now = Date.now();
-        this.taskMeta[id] = deleted ? { updatedAt: now, deletedAt: now } : { updatedAt: now };
-    }
-
-    touchRoomMeta(room, { deleted = false } = {}) {
-        const now = Date.now();
-        this.roomMeta[room] = deleted ? { updatedAt: now, deletedAt: now } : { updatedAt: now };
-        if (this.tasks[room]) {
-            this.tasks[room].updatedAt = now;
+        requestAnimationFrame(() => this.updateTabIndicator());
+        if (this.theme === 'auto') {
+            setInterval(() => this.applyTimeOfDay(), 60000);
         }
     }
-
-    getSyncState() {
-        return {
-            version: 0,
-            updatedAt: Date.now(),
-            tasks: this.tasks,
-            completedTasks: this.completedTasks,
-            weeklyTasks: {
-                week: this.currentWeek,
-                tasks: this.weeklyTasks,
-                updatedAt: Date.now(),
-            },
-            taskMeta: this.taskMeta,
-            roomMeta: this.roomMeta,
-            highFives: this.highFives || [],
-        };
-    }
-
-    mergeRemoteState(remote) {
-        if (!remote) return;
-        const local = this.getSyncState();
-        const merged = this.mergeStates(local, remote);
-        this.applySyncState(merged, { skipPush: true, skipRender: true });
-        // Detect any high-fives from the other device
-        this.checkIncomingHighFives(remote);
-    }
-
-    mergeStates(local, remote) {
-        const mergedTaskMeta = this.mergeMetaMaps(local.taskMeta || {}, remote.taskMeta || {});
-        const mergedRoomMeta = this.mergeMetaMaps(local.roomMeta || {}, remote.roomMeta || {});
-        const mergedHighFives = this.mergeHighFives(local.highFives || [], remote.highFives || []);
-
-        return {
-            version: Math.max(local.version || 0, remote.version || 0) + 1,
-            updatedAt: Date.now(),
-            tasks: this.mergeTasksObject(local.tasks, remote.tasks, mergedTaskMeta, mergedRoomMeta),
-            completedTasks: this.mergeCompletions(local.completedTasks, remote.completedTasks),
-            weeklyTasks: this.mergeWeeklyData(local.weeklyTasks, remote.weeklyTasks),
-            taskMeta: mergedTaskMeta,
-            roomMeta: mergedRoomMeta,
-            highFives: mergedHighFives,
-        };
-    }
-
-    mergeHighFives(a, b) {
-        const ids = new Set([...a.map(h => h.id), ...b.map(h => h.id)]);
-        const map = new Map();
-        [...a, ...b].forEach(h => map.set(h.id, h));
-        return Array.from(ids).map(id => map.get(id)).sort((x, y) => x.at - y.at).slice(-50);
-    }
-
-    mergeMetaMaps(a, b) {
-        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-        const out = {};
-        for (const key of keys) {
-            const va = a[key];
-            const vb = b[key];
-            if (!va) { out[key] = vb; continue; }
-            if (!vb) { out[key] = va; continue; }
-            const aTime = va.updatedAt || va.deletedAt || 0;
-            const bTime = vb.updatedAt || vb.deletedAt || 0;
-            if (aTime === bTime) {
-                out[key] = va.deletedAt && vb.deletedAt ? va : va.deletedAt ? vb : va;
-            } else {
-                out[key] = aTime > bTime ? va : vb;
-            }
-        }
-        return out;
-    }
-
-    mergeTasksObject(localTasks, remoteTasks, taskMeta, roomMeta) {
-        if (!localTasks) return remoteTasks;
-        if (!remoteTasks) return localTasks;
-
-        const roomNames = new Set([...Object.keys(localTasks), ...Object.keys(remoteTasks)]);
-        const merged = {};
-
-        for (const room of roomNames) {
-            const rm = roomMeta[room];
-            if (rm && rm.deletedAt) continue;
-
-            const localRoom = localTasks[room];
-            const remoteRoom = remoteTasks[room];
-            if (!localRoom) { merged[room] = remoteRoom; continue; }
-            if (!remoteRoom) { merged[room] = localRoom; continue; }
-
-            const localUpdated = localRoom.updatedAt || 0;
-            const remoteUpdated = remoteRoom.updatedAt || 0;
-            const baits = localUpdated >= remoteUpdated ? localRoom.baits : remoteRoom.baits;
-
-            const taskSet = new Map();
-            const addTasks = (list, sourceUpdatedAt) => {
-                for (const text of list || []) {
-                    const id = `${room}-${text}`;
-                    const meta = taskMeta[id];
-                    if (meta && meta.deletedAt) continue;
-                    const existing = taskSet.get(text);
-                    if (!existing || sourceUpdatedAt >= existing.updatedAt) {
-                        taskSet.set(text, { text, updatedAt: sourceUpdatedAt });
-                    }
-                }
-            };
-
-            addTasks(localRoom.tasks, localUpdated);
-            addTasks(remoteRoom.tasks, remoteUpdated);
-
-            merged[room] = {
-                tasks: Array.from(taskSet.values()).map((t) => t.text),
-                baits: baits ?? 0,
-                updatedAt: Math.max(localUpdated, remoteUpdated),
-            };
-        }
-        return merged;
-    }
-
-    mergeCompletions(local, remote) {
-        const keys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
-        const out = {};
-        for (const key of keys) {
-            const lv = local[key];
-            const rv = remote[key];
-            if (!lv) { if (rv) out[key] = rv; continue; }
-            if (!rv) { out[key] = lv; continue; }
-            const lt = typeof lv === 'string' ? Date.parse(lv) : lv.updatedAt || 0;
-            const rt = typeof rv === 'string' ? Date.parse(rv) : rv.updatedAt || 0;
-            out[key] = lt >= rt ? lv : rv;
-        }
-        return out;
-    }
-
-    mergeWeeklyData(local, remote) {
-        if (!local) return remote;
-        if (!remote) return local;
-        const localUpdated = local.updatedAt || 0;
-        const remoteUpdated = remote.updatedAt || 0;
-        return localUpdated >= remoteUpdated ? local : remote;
-    }
-
-    applySyncState(state, { skipPush = false, skipRender = false } = {}) {
-        if (state.tasks) this.tasks = state.tasks;
-        if (state.completedTasks) this.completedTasks = state.completedTasks;
-        if (state.taskMeta) this.taskMeta = state.taskMeta;
-        if (state.roomMeta) this.roomMeta = state.roomMeta;
-        if (state.highFives) this.highFives = state.highFives;
-        if (state.weeklyTasks) {
-            const w = state.weeklyTasks;
-            if (w.week === this.currentWeek || !w.week) {
-                this.weeklyTasks = w.tasks || this.weeklyTasks;
-            }
-        }
-        this.ensureRoomTimestamps();
-        this.persistAll({ skipPush });
-        if (!skipRender) {
-            this.renderRooms();
-            this.renderWeeklyTasks();
-            this.renderBaits();
-            this.renderMission();
-            this.updateOverallProgress();
-            this.updateWeeklyProgress();
-            this.updateStreakBadge();
-            this.updateAvatar();
-        }
-    }
-
-    async loadTasks() {
-        const defaultTasks = this.getDefaultTasks();
-        const stored = await Storage.get('cleaningTasks');
-        return stored || defaultTasks;
-    }
-
-    async loadCompletedTasks() {
-        const stored = await Storage.get('completedTasks');
-        return stored || {};
-    }
-
-    async loadWeeklyTasks() {
-        const stored = await Storage.get('weeklyTasks');
-        if (stored) {
-            if (stored.week === this.currentWeek) {
-                return stored.tasks;
-            }
-        }
-        return this.generateWeeklyTasks();
-    }
-
-    persistAll({ skipPush = false } = {}) {
-        Storage.set('cleaningTasks', this.tasks);
-        Storage.set('completedTasks', this.completedTasks);
-        Storage.set('weeklyTasks', {
-            week: this.currentWeek,
-            tasks: this.weeklyTasks,
-            updatedAt: Date.now(),
-        });
-        Storage.set('taskMeta', this.taskMeta);
-        Storage.set('roomMeta', this.roomMeta);
-        Storage.set('highFives', this.highFives || []);
-        if (!skipPush && this.syncClient) {
-            this.syncClient.scheduleSync();
-        }
-    }
-
-    saveTasks() { this.persistAll(); }
-    saveCompletedTasks() { this.persistAll(); }
-    saveWeeklyTasks() { this.persistAll(); }
 
     getCurrentWeek() {
         const now = new Date();
         const start = new Date(now.getFullYear(), 0, 1);
-        const diff = now - start;
-        const oneWeek = 1000 * 60 * 60 * 24 * 7;
-        return Math.floor(diff / oneWeek);
+        return Math.floor((now - start) / (1000 * 60 * 60 * 24 * 7));
     }
 
     getDefaultTasks() {
         const now = Date.now();
         const room = (tasks, baits = 0) => ({ tasks, baits, updatedAt: now });
         return {
-            "Bedroom": room([
-                "Clean skirting boards", "Clean windowsills", "Wash glass doors", "Wash windows",
-                "De-clutter", "Vacuum", "Clean air con filters", "Clean mirror",
-                "--- Walk in robe ---", "De-clutter", "Tidy", "Dust",
-                "--- Ensuite ---", "De-clutter", "Clean sills", "Clean window", "Clean wall tiles",
-                "Clean light and exhaust fan", "Clean mirror", "Clean shower", "Clean toilet"
-            ], 2),
-            "Lounge Room": room([
-                "Clean glass doors", "Clean mirrors", "De-clutter bookshelf", "De-clutter TV cabinet",
-                "Wash leather matt", "Condition couch", "Dust", "Clean skirting boards",
-                "Clean light shades", "Dust features", "Vacuum", "Remove cobwebs"
-            ], 3),
-            "Laundry": room([
-                "Clean cupboard tracks", "De-clutter cupboards", "Clean door fronts", "Wipe sills",
-                "Wipe skirting boards", "Dust paintings", "Clean tiles"
-            ], 1),
-            "Entries/Treadmill Area": room([
-                "Clean front door", "Clean skylight", "Clean glass", "Clean mirror",
-                "Get rid of stains on matt", "Clean skirting boards", "De-clutter toy baskets and clean",
-                "Dust", "Clean fan", "Clean air con filters", "Oil treadmill belt"
-            ], 2),
-            "Dining/Family Room": room([
-                "Clean skirting boards", "Clean back of bench", "Clean chairs", "Clean table",
-                "Wash runner", "Wash couch cover", "Dust", "Vacuum couch", "Dust TV", "Dust speaker",
-                "Dust paintings", "Clean glass doors", "Clean door tracks"
-            ], 4),
-            "Kitchen": room([
-                "Clean sink", "Clean all benches", "Clean stovetop", "Clean range", "Clean microwave",
-                "Clean all cupboards", "Clean glass", "Clean front and top fridge", "Clean dishwasher",
-                "De-clutter cupboards", "Clean skirting boards", "Clean light", "Clean skylight", "Clean oven"
-            ], 3),
-            "Sewing Room": room([
-                "Clean window sills", "Clean skirting boards", "Clean windows", "Tidy room",
-                "De-clutter", "New ironing board cover", "Take stuff to Vinnies", "Clean light fitting",
-                "Clean fan", "Clean mirror"
-            ], 1),
-            "Toilet": room([
-                "Clean window sills", "Clean skirting boards", "Clean toilet brush holder",
-                "Clean window", "Check plant", "Clean toilet"
-            ], 1),
-            "Bathroom": room([
-                "Clean window sills", "Clean tiles", "Clean mirror", "Clean shower", "Clean door",
-                "Clean window", "Check plant", "De-clutter cupboard", "De-clutter drawers"
-            ], 2),
-            "Kiddies Room": room([
-                "Clean window sills", "Clean skirting boards", "Clean windows", "Wash doona cover",
-                "Clean air con filter", "Clean fan", "Clean light shade", "Run air con",
-                "De-clutter cupboard", "Clean mirror", "Clean slider tracks", "Vacuum"
-            ], 2),
-            "Guestroom": room([
-                "Clean window sills", "Clean skirting boards", "Clean windows", "Dust fan",
-                "Dust light shade", "Clean air con filter", "Vacuum", "De-clutter cupboard",
-                "Run air con", "Clean mirror", "Clean wardrobe tracks"
-            ], 1),
-            "Outside - Entry": room([
-                "--- Entry ---", "Wash down", "Clean glass", "Wash front doors",
-                "--- Courtyard ---", "Wash doors", "Clean and tidy area", "Wash dog bed",
-                "--- Deck ---", "Wash down deck", "Wash furniture", "Water plants",
-                "Clean windows", "Clean doors", "Get rid of cobwebs", "Clean barbecue area"
-            ], 0),
+            "Bedroom": room(["Clean skirting boards","Clean windowsills","Wash glass doors","Wash windows","De-clutter","Vacuum","Clean air con filters","Clean mirror","--- Walk in robe ---","De-clutter","Tidy","Dust","--- Ensuite ---","De-clutter","Clean sills","Clean window","Clean wall tiles","Clean light and exhaust fan","Clean mirror","Clean shower","Clean toilet"], 2),
+            "Lounge Room": room(["Clean glass doors","Clean mirrors","De-clutter bookshelf","De-clutter TV cabinet","Wash leather matt","Condition couch","Dust","Clean skirting boards","Clean light shades","Dust features","Vacuum","Remove cobwebs"], 3),
+            "Laundry": room(["Clean cupboard tracks","De-clutter cupboards","Clean door fronts","Wipe sills","Wipe skirting boards","Dust paintings","Clean tiles"], 1),
+            "Entries/Treadmill Area": room(["Clean front door","Clean skylight","Clean glass","Clean mirror","Get rid of stains on matt","Clean skirting boards","De-clutter toy baskets and clean","Dust","Clean fan","Clean air con filters","Oil treadmill belt"], 2),
+            "Dining/Family Room": room(["Clean skirting boards","Clean back of bench","Clean chairs","Clean table","Wash runner","Wash couch cover","Dust","Vacuum couch","Dust TV","Dust speaker","Dust paintings","Clean glass doors","Clean door tracks"], 4),
+            "Kitchen": room(["Clean sink","Clean all benches","Clean stovetop","Clean range","Clean microwave","Clean all cupboards","Clean glass","Clean front and top fridge","Clean dishwasher","De-clutter cupboards","Clean skirting boards","Clean light","Clean skylight","Clean oven"], 3),
+            "Sewing Room": room(["Clean window sills","Clean skirting boards","Clean windows","Tidy room","De-clutter","New ironing board cover","Take stuff to Vinnies","Clean light fitting","Clean fan","Clean mirror"], 1),
+            "Toilet": room(["Clean window sills","Clean skirting boards","Clean toilet brush holder","Clean window","Check plant","Clean toilet"], 1),
+            "Bathroom": room(["Clean window sills","Clean tiles","Clean mirror","Clean shower","Clean door","Clean window","Check plant","De-clutter cupboard","De-clutter drawers"], 2),
+            "Kiddies Room": room(["Clean window sills","Clean skirting boards","Clean windows","Wash doona cover","Clean air con filter","Clean fan","Clean light shade","Run air con","De-clutter cupboard","Clean mirror","Clean slider tracks","Vacuum"], 2),
+            "Guestroom": room(["Clean window sills","Clean skirting boards","Clean windows","Dust fan","Dust light shade","Clean air con filter","Vacuum","De-clutter cupboard","Run air con","Clean mirror","Clean wardrobe tracks"], 1),
+            "Outside - Entry": room(["--- Entry ---","Wash down","Clean glass","Wash front doors","--- Courtyard ---","Wash doors","Clean and tidy area","Wash dog bed","--- Deck ---","Wash down deck","Wash furniture","Water plants","Clean windows","Clean doors","Get rid of cobwebs","Clean barbecue area"], 0),
         };
     }
 
-    generateWeeklyTasks() {
-        const weeklyTasks = [];
-        const roomNames = Object.keys(this.tasks);
-        const numTasks = Math.min(5, roomNames.length);
-        const selectedRooms = this.shuffleArray(roomNames).slice(0, numTasks);
+    async loadTasks() { return (await Storage.get('cleaningTasks')) || this.getDefaultTasks(); }
+    async loadCompletedTasks() { return (await Storage.get('completedTasks')) || {}; }
+    async loadWeeklyTasks() {
+        const stored = await Storage.get('weeklyTasks');
+        if (stored && stored.week === this.currentWeek) return stored.tasks;
+        return this.generateWeeklyTasks();
+    }
 
-        selectedRooms.forEach(room => {
-            const roomTasks = this.tasks[room].tasks;
-            if (roomTasks.length > 0) {
-                const randomTask = roomTasks[Math.floor(Math.random() * roomTasks.length)];
-                weeklyTasks.push({
-                    room: room,
-                    task: randomTask,
-                    id: `${room}-${randomTask.replace(/\s+/g, '-').toLowerCase()}`
-                });
+    persistAll() {
+        Storage.set('cleaningTasks', this.tasks);
+        Storage.set('completedTasks', this.completedTasks);
+        Storage.set('weeklyTasks', { week: this.currentWeek, tasks: this.weeklyTasks, updatedAt: Date.now() });
+        Storage.set('streak', this.streak);
+        Storage.set('badges', this.badges);
+        Storage.set('theme', this.theme);
+    }
+
+    getExportData() {
+        return { tasks: this.tasks, completedTasks: this.completedTasks, weeklyTasks: { week: this.currentWeek, tasks: this.weeklyTasks }, streak: this.streak, badges: this.badges, theme: this.theme };
+    }
+
+    generateWeeklyTasks() {
+        const rooms = this.shuffleArray(Object.keys(this.tasks));
+        const weeklyTasks = [];
+        rooms.slice(0, Math.min(5, rooms.length)).forEach(room => {
+            const list = this.tasks[room].tasks;
+            if (list.length) {
+                const task = list[Math.floor(Math.random() * list.length)];
+                weeklyTasks.push({ room, task, id: `${room}-${task.replace(/\s+/g, '-').toLowerCase()}` });
             }
         });
-
         return weeklyTasks;
     }
 
-    shuffleArray(array) {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
+    shuffleArray(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            [a[i], a[j]] = [a[j], a[i]];
         }
-        return shuffled;
+        return a;
     }
 
     setupEventListeners() {
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
-        });
-
+        document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', () => this.switchTab(btn.dataset.tab)));
         document.getElementById('refreshWeekly').addEventListener('click', () => this.refreshWeeklyTasks());
         document.getElementById('resetBaits').addEventListener('click', () => this.resetBaitsProgress());
         document.getElementById('addRoom').addEventListener('click', () => this.showAddRoomForm());
         document.getElementById('resetWeek').addEventListener('click', () => this.resetWeeklyProgress());
         document.getElementById('resetAll').addEventListener('click', () => this.resetAllProgress());
-
-        document.getElementById('createHousehold').addEventListener('click', () => this.syncClient.createHousehold());
-        document.getElementById('joinHousehold').addEventListener('click', () => {
-            this.syncClient.joinHousehold(document.getElementById('joinCodeInput').value);
-        });
-        document.getElementById('syncNow').addEventListener('click', () => this.syncClient.sync());
-        document.getElementById('leaveHousehold').addEventListener('click', () => this.syncClient.leaveHousehold());
-
         document.getElementById('exportData').addEventListener('click', () => this.exportData());
-        document.getElementById('importData').addEventListener('click', () => {
-            document.getElementById('importFileInput').click();
-        });
+        document.getElementById('importData').addEventListener('click', () => document.getElementById('importFileInput').click());
         document.getElementById('importFileInput').addEventListener('change', (e) => this.importData(e));
-
         document.getElementById('missionCard').addEventListener('click', () => this.openMission());
         document.getElementById('enableNotifs').addEventListener('click', () => this.enableNotifications());
         document.getElementById('testNotif').addEventListener('click', () => this.sendTestNotification());
         document.getElementById('showRecap').addEventListener('click', () => this.showMonthlyRecap(true));
-
-        document.querySelector('.close-modal').addEventListener('click', () => this.closeModal());
-        document.getElementById('congratsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'congratsModal') this.closeModal();
-        });
+        document.getElementById('closeCongrats').addEventListener('click', () => this.closeModal());
+        document.getElementById('congratsModal').addEventListener('click', (e) => { if (e.target.id === 'congratsModal') this.closeModal(); });
+        document.getElementById('soundsToggle').addEventListener('click', () => this.toggleSounds());
+        document.querySelectorAll('.theme-swatch').forEach(s => s.addEventListener('click', () => this.setTheme(s.dataset.theme)));
+        document.getElementById('timerFab').addEventListener('click', () => { Sounds.init(); this.timer.open(); });
+        document.getElementById('closeTimer').addEventListener('click', () => this.timer.close());
+        document.getElementById('timerModal').addEventListener('click', (e) => { if (e.target.id === 'timerModal') this.timer.close(); });
+        document.getElementById('timerStartPause').addEventListener('click', () => this.timer.running ? this.timer.pause() : this.timer.start());
+        document.getElementById('timerReset').addEventListener('click', () => this.timer.reset());
+        document.getElementById('ambientToggle').addEventListener('click', () => this.timer.toggleAmbient());
+        window.addEventListener('resize', () => this.updateTabIndicator());
+        document.body.addEventListener('click', () => Sounds.init(), { once: true });
     }
 
-    setupIosInstallHint() {
-        const hint = document.getElementById('iosInstallHint');
-        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-        Storage.get('installHintDismissed').then((dismissed) => {
-            if (isIos && !isStandalone && !dismissed) {
-                hint.classList.add('visible');
-            }
-        });
-        document.getElementById('dismissInstallHint').addEventListener('click', () => {
-            hint.classList.remove('visible');
-            Storage.set('installHintDismissed', true);
-        });
+    applyTheme() {
+        const root = document.documentElement;
+        if (this.theme === 'auto') {
+            root.removeAttribute('data-theme');
+            this.applyTimeOfDay();
+        } else {
+            root.setAttribute('data-theme', this.theme);
+            document.body.classList.remove('time-morning', 'time-midday', 'time-evening', 'time-night');
+        }
     }
 
-    exportData() {
-        const data = this.getSyncState();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mindi-cleaning-backup-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+    applyTimeOfDay() {
+        if (this.theme !== 'auto') return;
+        const h = new Date().getHours();
+        let cls = 'time-midday';
+        if (h >= 5 && h < 11) cls = 'time-morning';
+        else if (h >= 11 && h < 17) cls = 'time-midday';
+        else if (h >= 17 && h < 21) cls = 'time-evening';
+        else cls = 'time-night';
+        document.body.classList.remove('time-morning', 'time-midday', 'time-evening', 'time-night');
+        document.body.classList.add(cls);
+        const colors = { 'time-night': '#0F2027', 'time-evening': '#614385', 'time-morning': '#FFB6C1', 'time-midday': '#667EEA' };
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors[cls]);
     }
 
-    importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                this.applySyncState(data);
-                alert('Backup imported successfully!');
-            } catch {
-                alert('Could not import backup. Check the file format.');
-            }
-            event.target.value = '';
-        };
-        reader.readAsText(file);
+    setTheme(theme) {
+        this.theme = theme;
+        Storage.set('theme', theme);
+        this.applyTheme();
+        this.updateThemeSwatches();
+    }
+
+    updateThemeSwatches() {
+        document.querySelectorAll('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.theme === this.theme));
+    }
+
+    toggleSounds() {
+        Sounds.setEnabled(!Sounds.enabled);
+        Storage.set('soundsEnabled', Sounds.enabled);
+        this.updateSoundsToggle();
+        if (Sounds.enabled) { Sounds.init(); Sounds.check(); }
+    }
+
+    updateSoundsToggle() {
+        document.getElementById('soundsToggle').classList.toggle('on', Sounds.enabled);
     }
 
     switchTab(tabName) {
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(`${tabName}Tab`).classList.add('active');
+        if (tabName === this._currentTab) return;
+        const old = document.getElementById(this._currentTab + 'Tab');
+        const next = document.getElementById(tabName + 'Tab');
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+        old?.classList.add('exit-left');
+        old?.classList.remove('active');
+        setTimeout(() => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('exit-left'));
+            next?.classList.add('active');
+            this._currentTab = tabName;
+            this.updateTabIndicator();
+        }, 150);
+        this.updateTabIndicator();
     }
 
+    updateTabIndicator() {
+        const ind = document.getElementById('tabIndicator');
+        const active = document.querySelector('.tab-button.active');
+        if (!ind || !active) return;
+        const nav = document.getElementById('navTabs');
+        ind.style.left = (active.offsetLeft - nav.offsetLeft) + 'px';
+        ind.style.width = active.offsetWidth + 'px';
+    }
+
+    getRoomIcon(name) { return ROOM_ICONS[name] || '<svg class="room-icon" viewBox="0 0 32 32"><rect x="6" y="10" width="20" height="18" rx="3" fill="#ddd"/></svg>'; }
+
     renderRooms() {
-        const roomList = document.getElementById('roomList');
-        roomList.innerHTML = '';
-        Object.keys(this.tasks).forEach(roomName => {
-            roomList.appendChild(this.createRoomSection(roomName));
-        });
+        const list = document.getElementById('roomList');
+        list.innerHTML = '';
+        Object.keys(this.tasks).forEach(name => list.appendChild(this.createRoomSection(name)));
     }
 
     createRoomSection(roomName) {
         const section = document.createElement('div');
         section.className = 'room-section';
         const roomData = this.tasks[roomName];
-        const roomTasks = roomData.tasks;
-        const baitsCount = roomData.baits || 0;
-        const actualTasks = roomTasks.filter(task => !task.startsWith('---') || !task.endsWith('---'));
-        const completedCount = actualTasks.filter(task => this.isTaskCompleted(`${roomName}-${task}`)).length;
-        const baitInfo = baitsCount > 0 ? ` (${baitsCount} bait${baitsCount !== 1 ? 's' : ''})` : '';
-        const safeRoom = roomName.replace(/'/g, "\\'");
-
-        section.innerHTML = `
-            <div class="room-header">
-                <h3 class="room-title">${roomName}${baitInfo}</h3>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <span class="room-progress">${completedCount}/${actualTasks.length} completed</span>
-                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editRoomName('${safeRoom}')">✏️ Edit Room</button>
-                    <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.addTaskToRoom('${safeRoom}')">➕ Add Task</button>
-                </div>
-            </div>
-            <div class="task-list">
-                ${roomTasks.map(task => this.createTaskElement(roomName, task)).join('')}
-            </div>
-        `;
+        const actual = roomData.tasks.filter(t => !(t.startsWith('---') && t.endsWith('---')));
+        const done = actual.filter(t => this.isTaskCompleted(`${roomName}-${t}`)).length;
+        const baitInfo = roomData.baits > 0 ? ` (${roomData.baits} bait${roomData.baits !== 1 ? 's' : ''})` : '';
+        const safe = roomName.replace(/'/g, "\\'");
+        section.innerHTML = `<div class="room-header"><div class="room-title-wrap">${this.getRoomIcon(roomName)}<h3 class="room-title">${roomName}${baitInfo}</h3></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="room-progress">${done}/${actual.length} completed</span><button class="action-btn" style="font-size:0.8rem;padding:5px 10px" onclick="cleaningApp.editRoomName('${safe}')">Edit Room</button><button class="action-btn" style="font-size:0.8rem;padding:5px 10px" onclick="cleaningApp.addTaskToRoom('${safe}')">Add Task</button></div></div><div class="task-list">${roomData.tasks.map(t => this.createTaskElement(roomName, t)).join('')}</div>`;
         return section;
     }
 
@@ -1651,97 +1024,88 @@ class CleaningApp {
         const taskId = `${roomName}-${task}`;
         const isCompleted = this.isTaskCompleted(taskId);
         const safeTask = task.replace(/'/g, "\\'");
-
+        const safeRoom = roomName.replace(/'/g, "\\'");
         if (task.startsWith('---') && task.endsWith('---')) {
             return `<div class="subheading"><span class="subheading-text">${task.replace(/---/g, '').trim()}</span></div>`;
         }
-
-        return `
-            <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${taskId}">
-                <svg class="task-check" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <circle class="check-circle" cx="16" cy="16" r="14"></circle>
-                    <path class="check-path" d="M9 16 L14 21 L23 11"></path>
-                </svg>
-                <span class="task-text">${task}</span>
-                <div class="task-actions">
-                    <button class="edit-btn" title="Edit task" onclick="cleaningApp.editTask('${roomName.replace(/'/g, "\\'")}', '${safeTask}')">✏️</button>
-                    <button class="delete-btn" title="Delete task" onclick="cleaningApp.deleteTask('${roomName.replace(/'/g, "\\'")}', '${safeTask}')">🗑️</button>
-                </div>
-            </div>
-        `;
+        return `<div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${taskId}"><svg class="task-check" viewBox="0 0 32 32"><circle class="check-circle" cx="16" cy="16" r="14"/><circle class="check-ripple" cx="16" cy="16" r="14"/><path class="check-path" d="M9 16 L14 21 L23 11"/></svg><span class="task-text">${task}</span><div class="task-actions"><button class="edit-btn" onclick="cleaningApp.editTask('${safeRoom}','${safeTask}')">&#9999;&#65039;</button><button class="delete-btn" onclick="cleaningApp.deleteTask('${safeRoom}','${safeTask}')">&#128465;&#65039;</button></div></div>`;
     }
 
     renderBaits() {
-        const baitsContainer = document.getElementById('baitsList');
-        baitsContainer.innerHTML = '';
+        const c = document.getElementById('baitsList');
+        c.innerHTML = '';
         Object.keys(this.tasks).forEach(roomName => {
-            const roomData = this.tasks[roomName];
-            if (roomData.baits > 0) {
-                const baitElement = document.createElement('div');
-                baitElement.className = 'room-section';
-                const baitId = `bait-${roomName}`;
-                const isCompleted = this.isTaskCompleted(baitId);
-                baitElement.innerHTML = `
-                    <div class="room-header">
-                        <h3 class="room-title">${roomName}</h3>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <span style="color: #666;">${roomData.baits} bait${roomData.baits !== 1 ? 's' : ''}</span>
-                            <button class="action-btn" style="font-size: 0.8rem; padding: 5px 10px;" onclick="cleaningApp.editBaits('${roomName.replace(/'/g, "\\'")}')">Edit Count</button>
-                        </div>
-                    </div>
-                    <div class="task-list">
-                        <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${baitId}">
-                            <svg class="task-check" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                                <circle class="check-circle" cx="16" cy="16" r="14"></circle>
-                                <path class="check-path" d="M9 16 L14 21 L23 11"></path>
-                            </svg>
-                            <span class="task-text">Change baits</span>
-                        </div>
-                    </div>
-                `;
-                baitsContainer.appendChild(baitElement);
-            }
+            const d = this.tasks[roomName];
+            if (d.baits <= 0) return;
+            const baitId = `bait-${roomName}`;
+            const done = this.isTaskCompleted(baitId);
+            const safe = roomName.replace(/'/g, "\\'");
+            const el = document.createElement('div');
+            el.className = 'room-section';
+            el.innerHTML = `<div class="room-header"><div class="room-title-wrap">${this.getRoomIcon(roomName)}<h3 class="room-title">${roomName}</h3></div><div style="display:flex;gap:10px;align-items:center"><span style="color:#666">${d.baits} bait${d.baits !== 1 ? 's' : ''}</span><button class="action-btn" style="font-size:0.8rem;padding:5px 10px" onclick="cleaningApp.editBaits('${safe}')">Edit Count</button></div></div><div class="task-list"><div class="task-item ${done ? 'completed' : ''}" data-task-id="${baitId}"><svg class="task-check" viewBox="0 0 32 32"><circle class="check-circle" cx="16" cy="16" r="14"/><circle class="check-ripple" cx="16" cy="16" r="14"/><path class="check-path" d="M9 16 L14 21 L23 11"/></svg><span class="task-text">Change baits</span></div></div>`;
+            c.appendChild(el);
         });
     }
 
     renderWeeklyTasks() {
-        const weeklyContainer = document.getElementById('weeklyTasks');
-        weeklyContainer.innerHTML = '';
-
-        if (this.weeklyTasks.length === 0) {
-            weeklyContainer.innerHTML = '<p>No weekly tasks generated yet. Click "Get New Weekly Tasks" to start!</p>';
+        const c = document.getElementById('weeklyTasks');
+        c.innerHTML = '';
+        if (!this.weeklyTasks.length) {
+            c.innerHTML = '<p>No weekly tasks yet. Click "Get New Weekly Tasks" to start!</p>';
             return;
         }
-
-        this.weeklyTasks.forEach(weeklyTask => {
-            const taskElement = document.createElement('div');
-            taskElement.className = 'task-item';
-            taskElement.dataset.taskId = weeklyTask.id;
-            const isCompleted = this.isTaskCompleted(weeklyTask.id);
-            taskElement.innerHTML = `
-                <svg class="task-check" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <circle class="check-circle" cx="16" cy="16" r="14"></circle>
-                    <path class="check-path" d="M9 16 L14 21 L23 11"></path>
-                </svg>
-                <span class="task-text"><strong>${weeklyTask.room}:</strong> ${weeklyTask.task}</span>
-            `;
-            if (isCompleted) taskElement.classList.add('completed');
-            weeklyContainer.appendChild(taskElement);
+        this.weeklyTasks.forEach(wt => {
+            const el = document.createElement('div');
+            el.className = 'task-item' + (this.isTaskCompleted(wt.id) ? ' completed' : '');
+            el.dataset.taskId = wt.id;
+            el.innerHTML = `<svg class="task-check" viewBox="0 0 32 32"><circle class="check-circle" cx="16" cy="16" r="14"/><circle class="check-ripple" cx="16" cy="16" r="14"/><path class="check-path" d="M9 16 L14 21 L23 11"/></svg><span class="task-text"><strong>${wt.room}:</strong> ${wt.task}</span>`;
+            c.appendChild(el);
         });
+    }
+
+    renderBadgeGallery() {
+        const g = document.getElementById('badgeGallery');
+        g.innerHTML = BADGES.map(b => `<div class="badge-card ${this.badges.unlocked.includes(b.id) ? 'unlocked' : ''}" title="${b.name}"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`).join('');
+    }
+
+    checkBadges() {
+        let any = false;
+        BADGES.forEach(b => {
+            if (this.badges.unlocked.includes(b.id)) return;
+            if (b.check(this)) {
+                this.badges.unlocked.push(b.id);
+                this.badges.unlockedAt[b.id] = Date.now();
+                this.showBadgeToast(b);
+                Sounds.badge();
+                any = true;
+            }
+        });
+        if (any) { Storage.set('badges', this.badges); this.renderBadgeGallery(); }
+    }
+
+    showBadgeToast(badge) {
+        const t = document.getElementById('badgeToast');
+        t.innerHTML = `${badge.icon} Badge unlocked: <strong>${badge.name}</strong>!`;
+        t.classList.add('show');
+        Haptics.success();
+        clearTimeout(this._badgeTimer);
+        this._badgeTimer = setTimeout(() => t.classList.remove('show'), 3500);
     }
 
     toggleTaskCompletion(taskId) {
         const wasCompleted = !!this.completedTasks[taskId];
+        const item = document.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
         if (wasCompleted) {
             delete this.completedTasks[taskId];
             Haptics.light();
         } else {
             this.completedTasks[taskId] = new Date().toISOString();
             Haptics.medium();
-            this.maybeFireHighFive(taskId);
+            Sounds.check();
+            if (item) { item.classList.add('just-checked'); setTimeout(() => item.classList.remove('just-checked'), 500); }
             this.maybeFireCelebrationScene(taskId);
         }
-        this.saveCompletedTasks();
+        this.persistAll();
         this.updateOverallProgress();
         this.updateWeeklyProgress();
         this.renderRooms();
@@ -1750,18 +1114,21 @@ class CleaningApp {
         this.updateAvatar();
         this.renderMission();
         this.updateStreakBadge();
+        this.checkBadges();
 
         if (!wasCompleted) {
             const room = this.detectRoomFromTaskId(taskId);
             if (room && this.isRoomComplete(room)) {
                 Haptics.heavy();
+                Sounds.roomComplete();
                 this.flashAvatar();
             }
         }
 
-        const weeklyCompleted = this.weeklyTasks.every(task => this.isTaskCompleted(task.id));
-        if (weeklyCompleted && this.weeklyTasks.length > 0 && !wasCompleted) {
+        const weeklyDone = this.weeklyTasks.length > 0 && this.weeklyTasks.every(t => this.isTaskCompleted(t.id));
+        if (weeklyDone && !wasCompleted) {
             Haptics.success();
+            Sounds.weeklyComplete();
             this.showCongratulations();
             this.bumpStreak();
         }
@@ -1782,83 +1149,140 @@ class CleaningApp {
         return actual.length > 0 && actual.every(t => this.isTaskCompleted(`${room}-${t}`));
     }
 
-    isTaskCompleted(taskId) {
-        return !!this.completedTasks[taskId];
+    isTaskCompleted(taskId) { return !!this.completedTasks[taskId]; }
+
+    countCompletedToday() {
+        const today = new Date().toDateString();
+        return Object.values(this.completedTasks).filter(v => new Date(v).toDateString() === today).length;
     }
 
     updateOverallProgress() {
-        const totalTasks = Object.values(this.tasks).reduce((sum, room) =>
-            sum + room.tasks.filter(task => !task.startsWith('---') || !task.endsWith('---')).length, 0);
-        const completedTasks = Object.keys(this.completedTasks).length;
-        const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-        const progressFill = document.getElementById('overallProgress');
-        const progressText = document.getElementById('progressText');
-        progressFill.style.width = `${percentage}%`;
-
-        if (percentage === 100) {
-            progressText.textContent = "🎉 Amazing! Everything is spotless! ⭐🌟⭐";
-            this.showOverallCelebration();
-        } else if (percentage >= 75) {
-            progressText.textContent = `🌟 Almost there! ${Math.round(percentage)}% complete ✨`;
-        } else if (percentage >= 50) {
-            progressText.textContent = `💪 Halfway there! ${Math.round(percentage)}% complete ⭐`;
-        } else if (percentage >= 25) {
-            progressText.textContent = `🚀 Getting started! ${Math.round(percentage)}% complete 🌟`;
-        } else {
-            progressText.textContent = `✨ Let's get cleaning! ${Math.round(percentage)}% complete`;
-        }
+        const total = Object.values(this.tasks).reduce((s, r) => s + r.tasks.filter(t => !(t.startsWith('---') && t.endsWith('---'))).length, 0);
+        const done = Object.keys(this.completedTasks).length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        setRingProgress(document.getElementById('overallRing'), pct);
+        animateCount(document.getElementById('overallRingText'), pct);
+        const txt = document.getElementById('progressText');
+        if (pct === 100) { txt.textContent = 'Amazing! Everything is spotless!'; this.showOverallCelebration(); }
+        else if (pct >= 75) txt.textContent = `Almost there! ${pct}% complete`;
+        else if (pct >= 50) txt.textContent = `Halfway there! ${pct}% complete`;
+        else if (pct >= 25) txt.textContent = `Getting started! ${pct}% complete`;
+        else txt.textContent = `Let's get cleaning! ${pct}% complete`;
     }
 
     updateWeeklyProgress() {
-        if (this.weeklyTasks.length === 0) return;
-        const completedWeeklyTasks = this.weeklyTasks.filter(task => this.isTaskCompleted(task.id)).length;
-        const totalWeeklyTasks = this.weeklyTasks.length;
-        const percentage = (completedWeeklyTasks / totalWeeklyTasks) * 100;
-        const progressFill = document.getElementById('weeklyProgress');
-        const progressText = document.getElementById('weeklyProgressText');
-        if (progressFill) progressFill.style.width = `${percentage}%`;
-
-        if (progressText) {
-            if (percentage === 100) {
-                progressText.textContent = "🎉 Weekly goals complete! Amazing work! ⭐🌟⭐";
-                this.showWeeklyCelebration();
-            } else if (percentage >= 75) {
-                progressText.textContent = `🌟 Almost done! ${completedWeeklyTasks}/${totalWeeklyTasks} tasks complete ✨`;
-            } else if (percentage >= 50) {
-                progressText.textContent = `💪 Halfway there! ${completedWeeklyTasks}/${totalWeeklyTasks} tasks done ⭐`;
-                if (completedWeeklyTasks === Math.ceil(totalWeeklyTasks / 2)) {
-                    this.showMilestoneMessage("Halfway point reached! 💪⭐");
-                }
-            } else if (percentage >= 25) {
-                progressText.textContent = `🚀 Getting started! ${completedWeeklyTasks}/${totalWeeklyTasks} tasks complete 🌟`;
-            } else {
-                progressText.textContent = `✨ Let's tackle this week! ${completedWeeklyTasks}/${totalWeeklyTasks} tasks done`;
-            }
-        }
+        if (!this.weeklyTasks.length) return;
+        const done = this.weeklyTasks.filter(t => this.isTaskCompleted(t.id)).length;
+        const total = this.weeklyTasks.length;
+        const pct = Math.round((done / total) * 100);
+        setRingProgress(document.getElementById('weeklyRing'), pct);
+        animateCount(document.getElementById('weeklyRingText'), pct);
+        const txt = document.getElementById('weeklyProgressText');
+        if (pct === 100) txt.textContent = 'Weekly goals complete! Amazing work!';
+        else if (pct >= 75) txt.textContent = `Almost done! ${done}/${total} tasks complete`;
+        else if (pct >= 50) txt.textContent = `Halfway there! ${done}/${total} tasks done`;
+        else if (pct >= 25) txt.textContent = `Getting started! ${done}/${total} tasks complete`;
+        else txt.textContent = `Let's tackle this week! ${done}/${total} tasks done`;
     }
 
     refreshWeeklyTasks() {
         this.weeklyTasks = this.generateWeeklyTasks();
-        this.saveWeeklyTasks();
+        this.persistAll();
         this.renderWeeklyTasks();
         this.updateWeeklyProgress();
     }
 
+    updateStreakBadge() {
+        const c = this.streak?.count || 0;
+        document.getElementById('streakCount').textContent = c;
+        document.getElementById('streakBadge').classList.toggle('zero', c === 0);
+        animateCount(document.getElementById('streakCount'), c, '');
+    }
+
+    bumpStreak() {
+        const week = this.currentWeek;
+        if (this.streak?.lastWeek === week) return;
+        const prev = week - 1;
+        this.streak = { count: this.streak?.lastWeek === prev ? (this.streak.count || 0) + 1 : 1, lastWeek: week };
+        Storage.set('streak', this.streak);
+        this.updateStreakBadge();
+        this.checkBadges();
+    }
+
+    updateAvatar() {
+        const m = document.getElementById('mindiMascot');
+        if (!m) return;
+        const today = this.countCompletedToday();
+        const total = Object.keys(this.completedTasks).length;
+        m.classList.remove('idle', 'happy', 'celebrate', 'sleep');
+        if (today >= 5) m.classList.add('happy');
+        else if (today > 0) m.classList.add('idle');
+        else if (total === 0) m.classList.add('idle');
+        else m.classList.add('idle');
+        const smile = m.querySelector('.mascot-smile');
+        if (smile) smile.setAttribute('d', today >= 5 ? 'M32 35 Q40 44 48 35' : 'M33 36 Q40 42 47 36');
+    }
+
+    flashAvatar() {
+        const m = document.getElementById('mindiMascot');
+        if (!m) return;
+        m.classList.remove('celebrate');
+        void m.offsetWidth;
+        m.classList.add('celebrate');
+        setTimeout(() => m.classList.remove('celebrate'), 800);
+    }
+
+    startAvatarWatcher() {
+        setInterval(() => {
+            const all = Object.values(this.completedTasks).map(v => Date.parse(v));
+            const latest = all.length ? Math.max(...all) : 0;
+            const days = (Date.now() - latest) / 86400000;
+            const m = document.getElementById('mindiMascot');
+            if (!m) return;
+            if (days > 3 && !m.classList.contains('celebrate')) m.classList.add('sleep');
+            else m.classList.remove('sleep');
+        }, 60000);
+    }
+
+    renderMission() {
+        const card = document.getElementById('missionCard');
+        const candidates = [];
+        Object.keys(this.tasks).forEach(room => {
+            this.tasks[room].tasks.forEach(task => {
+                if (task.startsWith('---') && task.endsWith('---')) return;
+                const id = `${room}-${task}`;
+                if (this.isTaskCompleted(id)) return;
+                const lastDone = this.completedTasks[id] ? Date.parse(this.completedTasks[id]) : 0;
+                candidates.push({ room, task, id, lastDone });
+            });
+        });
+        if (!candidates.length) { card.style.display = 'none'; return; }
+        candidates.sort((a, b) => a.lastDone - b.lastDone);
+        const mission = candidates[0];
+        this._currentMission = mission;
+        card.style.display = 'block';
+        document.getElementById('missionTask').textContent = mission.task;
+        document.getElementById('missionRoom').textContent = `in ${mission.room}`;
+    }
+
+    openMission() {
+        if (!this._currentMission) return;
+        this.switchTab('rooms');
+        setTimeout(() => {
+            const el = document.querySelector(`[data-task-id="${CSS.escape(this._currentMission.id)}"]`);
+            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.boxShadow = '0 0 0 4px #FFE66D'; setTimeout(() => el.style.boxShadow = '', 1800); }
+        }, 300);
+    }
+
     showAddRoomForm() {
         const editor = document.getElementById('taskEditor');
-        editor.innerHTML = `
-            <h4>Add New Room/Area</h4>
-            <input type="text" id="newRoomName" placeholder="Room name" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;">
-            <input type="number" id="newRoomBaits" placeholder="Number of baits (0 if none)" min="0" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;">
-            <button id="saveRoom" class="action-btn">Save Room</button>
-        `;
+        editor.innerHTML = `<h4>Add New Room/Area</h4><input type="text" id="newRoomName" placeholder="Room name" style="width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ddd"><input type="number" id="newRoomBaits" placeholder="Number of baits (0 if none)" min="0" style="width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ddd"><button id="saveRoom" class="action-btn">Save Room</button>`;
         document.getElementById('saveRoom').addEventListener('click', () => {
-            const roomName = document.getElementById('newRoomName').value.trim();
-            const baitsCount = parseInt(document.getElementById('newRoomBaits').value) || 0;
-            if (roomName && !this.tasks[roomName]) {
-                this.tasks[roomName] = { tasks: [], baits: baitsCount, updatedAt: Date.now() };
-                this.touchRoomMeta(roomName);
-                this.saveTasks();
+            const name = document.getElementById('newRoomName').value.trim();
+            const baits = parseInt(document.getElementById('newRoomBaits').value) || 0;
+            if (name && !this.tasks[name]) {
+                this.tasks[name] = { tasks: [], baits, updatedAt: Date.now() };
+                this.persistAll();
                 this.renderRooms();
                 this.renderBaits();
                 editor.innerHTML = '';
@@ -1867,604 +1291,263 @@ class CleaningApp {
     }
 
     resetWeeklyProgress() {
-        if (confirm('Reset weekly progress? This will uncheck all weekly tasks.')) {
-            this.weeklyTasks.forEach(task => delete this.completedTasks[task.id]);
-            this.saveCompletedTasks();
-            this.updateOverallProgress();
-            this.updateWeeklyProgress();
-            this.renderRooms();
-            this.renderWeeklyTasks();
-        }
+        if (!confirm('Reset weekly progress? This will uncheck all weekly tasks.')) return;
+        this.weeklyTasks.forEach(t => delete this.completedTasks[t.id]);
+        this.persistAll();
+        this.updateOverallProgress();
+        this.updateWeeklyProgress();
+        this.renderWeeklyTasks();
     }
 
     resetAllProgress() {
-        if (confirm('Reset ALL progress? This will uncheck everything and cannot be undone!')) {
-            this.completedTasks = {};
-            this.saveCompletedTasks();
-            this.updateOverallProgress();
-            this.renderRooms();
-            this.renderWeeklyTasks();
-            this.renderBaits();
-        }
+        if (!confirm('Reset ALL progress? This cannot be undone!')) return;
+        this.completedTasks = {};
+        this.persistAll();
+        this.updateOverallProgress();
+        this.renderRooms();
+        this.renderWeeklyTasks();
+        this.renderBaits();
     }
 
-    editTask(roomName, oldTask) {
+    editTask(room, oldTask) {
         const newTask = prompt('Edit task:', oldTask);
-        if (newTask && newTask.trim() !== oldTask) {
-            const roomData = this.tasks[roomName];
-            const taskIndex = roomData.tasks.indexOf(oldTask);
-            if (taskIndex !== -1) {
-                const oldTaskId = `${roomName}-${oldTask}`;
-                if (this.completedTasks[oldTaskId]) delete this.completedTasks[oldTaskId];
-                this.touchTaskMeta(roomName, oldTask, { deleted: true });
-                roomData.tasks[taskIndex] = newTask.trim();
-                this.touchTaskMeta(roomName, newTask.trim());
-                this.touchRoomMeta(roomName);
-                this.saveTasks();
-                this.saveCompletedTasks();
-                this.renderRooms();
-                this.renderWeeklyTasks();
-            }
-        }
+        if (!newTask || newTask.trim() === oldTask) return;
+        const data = this.tasks[room];
+        const idx = data.tasks.indexOf(oldTask);
+        if (idx === -1) return;
+        delete this.completedTasks[`${room}-${oldTask}`];
+        data.tasks[idx] = newTask.trim();
+        this.persistAll();
+        this.renderRooms();
+        this.renderWeeklyTasks();
     }
 
-    deleteTask(roomName, task) {
-        if (confirm(`Delete task "${task}"?`)) {
-            const roomData = this.tasks[roomName];
-            const taskIndex = roomData.tasks.indexOf(task);
-            if (taskIndex !== -1) {
-                const taskId = `${roomName}-${task}`;
-                if (this.completedTasks[taskId]) delete this.completedTasks[taskId];
-                this.touchTaskMeta(roomName, task, { deleted: true });
-                roomData.tasks.splice(taskIndex, 1);
-                this.touchRoomMeta(roomName);
-                this.saveTasks();
-                this.saveCompletedTasks();
-                this.renderRooms();
-                this.renderWeeklyTasks();
-                this.renderBaits();
-            }
-        }
+    deleteTask(room, task) {
+        if (!confirm(`Delete task "${task}"?`)) return;
+        const data = this.tasks[room];
+        const idx = data.tasks.indexOf(task);
+        if (idx === -1) return;
+        delete this.completedTasks[`${room}-${task}`];
+        data.tasks.splice(idx, 1);
+        this.persistAll();
+        this.renderRooms();
+        this.renderWeeklyTasks();
+        this.renderBaits();
     }
 
-    addTaskToRoom(roomName) {
-        const newTask = prompt('Add new task:');
-        if (newTask && newTask.trim()) {
-            const roomData = this.tasks[roomName];
-            roomData.tasks.push(newTask.trim());
-            this.touchTaskMeta(roomName, newTask.trim());
-            this.touchRoomMeta(roomName);
-            this.saveTasks();
-            this.renderRooms();
-        }
+    addTaskToRoom(room) {
+        const t = prompt('Add new task:');
+        if (!t?.trim()) return;
+        this.tasks[room].tasks.push(t.trim());
+        this.persistAll();
+        this.renderRooms();
     }
 
-    editRoomName(oldRoomName) {
-        const newRoomName = prompt('Rename room to:', oldRoomName);
-        if (newRoomName && newRoomName.trim() !== oldRoomName && newRoomName.trim()) {
-            const trimmedNewName = newRoomName.trim();
-            if (this.tasks[trimmedNewName]) {
-                alert('A room with this name already exists!');
-                return;
-            }
-            this.tasks[trimmedNewName] = this.tasks[oldRoomName];
-            delete this.tasks[oldRoomName];
-            this.touchRoomMeta(oldRoomName, { deleted: true });
-            this.touchRoomMeta(trimmedNewName);
-
-            const updatedCompletions = {};
-            Object.keys(this.completedTasks).forEach(taskId => {
-                if (taskId.startsWith(`${oldRoomName}-`)) {
-                    updatedCompletions[taskId.replace(`${oldRoomName}-`, `${trimmedNewName}-`)] = this.completedTasks[taskId];
-                } else {
-                    updatedCompletions[taskId] = this.completedTasks[taskId];
-                }
-            });
-            this.completedTasks = updatedCompletions;
-
-            this.weeklyTasks.forEach(task => {
-                if (task.room === oldRoomName) {
-                    task.room = trimmedNewName;
-                    task.id = `${trimmedNewName}-${task.task.replace(/\s+/g, '-').toLowerCase()}`;
-                }
-            });
-
-            this.saveTasks();
-            this.saveCompletedTasks();
-            this.saveWeeklyTasks();
-            this.renderRooms();
-            this.renderWeeklyTasks();
-            this.renderBaits();
-            this.updateOverallProgress();
-        }
+    editRoomName(oldName) {
+        const newName = prompt('Rename room to:', oldName);
+        if (!newName || newName.trim() === oldName) return;
+        const trimmed = newName.trim();
+        if (this.tasks[trimmed]) { alert('A room with this name already exists!'); return; }
+        this.tasks[trimmed] = this.tasks[oldName];
+        delete this.tasks[oldName];
+        const updated = {};
+        Object.keys(this.completedTasks).forEach(id => {
+            updated[id.startsWith(`${oldName}-`) ? id.replace(`${oldName}-`, `${trimmed}-`) : id] = this.completedTasks[id];
+        });
+        this.completedTasks = updated;
+        this.weeklyTasks.forEach(wt => {
+            if (wt.room === oldName) { wt.room = trimmed; wt.id = `${trimmed}-${wt.task.replace(/\s+/g, '-').toLowerCase()}`; }
+        });
+        this.persistAll();
+        this.renderRooms();
+        this.renderWeeklyTasks();
+        this.renderBaits();
+        this.updateOverallProgress();
     }
 
-    editBaits(roomName) {
-        const roomData = this.tasks[roomName];
-        const newCount = prompt(`Number of baits in ${roomName}:`, roomData.baits);
-        const count = parseInt(newCount);
-        if (!isNaN(count) && count >= 0) {
-            if (count === 0 && this.isTaskCompleted(`bait-${roomName}`)) {
-                delete this.completedTasks[`bait-${roomName}`];
-                this.saveCompletedTasks();
-            }
-            roomData.baits = count;
-            this.touchRoomMeta(roomName);
-            this.saveTasks();
-            this.renderRooms();
-            this.renderBaits();
-            this.updateOverallProgress();
-        }
+    editBaits(room) {
+        const count = parseInt(prompt(`Number of baits in ${room}:`, this.tasks[room].baits));
+        if (isNaN(count) || count < 0) return;
+        if (count === 0) delete this.completedTasks[`bait-${room}`];
+        this.tasks[room].baits = count;
+        this.persistAll();
+        this.renderRooms();
+        this.renderBaits();
+        this.updateOverallProgress();
     }
 
     resetBaitsProgress() {
-        if (confirm('Reset all bait checks? This will uncheck all bait changes.')) {
-            Object.keys(this.tasks).forEach(roomName => {
-                const baitId = `bait-${roomName}`;
-                if (this.completedTasks[baitId]) delete this.completedTasks[baitId];
-            });
-            this.saveCompletedTasks();
-            this.renderBaits();
-            this.updateOverallProgress();
-        }
+        if (!confirm('Reset all bait checks?')) return;
+        Object.keys(this.tasks).forEach(r => delete this.completedTasks[`bait-${r}`]);
+        this.persistAll();
+        this.renderBaits();
+        this.updateOverallProgress();
+    }
+
+    exportData() {
+        const blob = new Blob([JSON.stringify(this.getExportData(), null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `mindi-cleaning-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+    }
+
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.tasks) this.tasks = data.tasks;
+                if (data.completedTasks) this.completedTasks = data.completedTasks;
+                if (data.weeklyTasks) {
+                    if (data.weeklyTasks.week === this.currentWeek) this.weeklyTasks = data.weeklyTasks.tasks;
+                    else if (data.weeklyTasks.tasks) this.weeklyTasks = data.weeklyTasks.tasks;
+                }
+                if (data.streak) this.streak = data.streak;
+                if (data.badges) this.badges = data.badges;
+                if (data.theme) { this.theme = data.theme; this.applyTheme(); this.updateThemeSwatches(); }
+                this.persistAll();
+                this.renderRooms();
+                this.renderWeeklyTasks();
+                this.renderBaits();
+                this.renderBadgeGallery();
+                this.updateOverallProgress();
+                this.updateWeeklyProgress();
+                this.updateStreakBadge();
+                alert('Backup imported successfully!');
+            } catch { alert('Could not import backup. Check the file format.'); }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
     }
 
     showCongratulations() {
-        const messages = [
-            "🎉 Fantastic job! You're a cleaning superstar! ⭐⭐⭐",
-            "🌟 Wow! Everything looks amazing! ✨✨✨",
-            "💫 You did it! Time for a well-deserved break! 🌈🎊",
-            "🏆 Champion cleaner! You're unstoppable! 🏅🎯",
-            "🎊 Incredible work! The house is sparkling! ✨💎✨",
-            "🎉 You are absolutely amazing! Keep shining! ⭐🌟⭐",
-            "💫 Outstanding work! You're a cleaning wizard! 🧙‍♀️✨",
-            "🏆 Victory is yours! Amazing achievement! 🎯🎉"
-        ];
-        document.getElementById('congratsContent').innerHTML = `
-            <h2>🎉 Congratulations! 🎉</h2>
-            <p style="font-size: 1.2rem; margin: 15px 0;">${messages[Math.floor(Math.random() * messages.length)]}</p>
-            <div style="font-size: 4rem; margin: 25px 0; animation: sparkle 2s ease-in-out;">🎉✨🏆⭐💫🌟🎊</div>
-            <p style="font-weight: bold; color: #FF6B9D;">Ready for next week's tasks?</p>
-        `;
-        document.getElementById('congratsModal').style.display = 'block';
+        const msgs = ["Fantastic job! You're a cleaning superstar!","Wow! Everything looks amazing!","You did it! Time for a well-deserved break!","Champion cleaner! You're unstoppable!","Incredible work! The house is sparkling!"];
+        document.getElementById('congratsContent').innerHTML = `<h2>Congratulations!</h2><p style="font-size:1.2rem;margin:15px 0">${msgs[Math.floor(Math.random() * msgs.length)]}</p><div style="font-size:4rem;margin:25px 0;animation:sparkle 2s ease-in-out">&#127881;&#10024;&#127942;</div><p style="font-weight:bold;color:var(--primary)">Ready for next week's tasks?</p>`;
+        document.getElementById('congratsModal').classList.add('open');
         this.createConfetti();
         this.spawnSparkles(30);
         this.flashAvatar();
     }
 
-    closeModal() {
-        document.getElementById('congratsModal').style.display = 'none';
-    }
+    closeModal() { document.getElementById('congratsModal').classList.remove('open'); }
 
     createConfetti() {
+        const colors = ['#FF6B9D', '#4ECDC4', '#FFE66D'];
         for (let i = 0; i < 50; i++) {
-            const confetti = document.createElement('div');
-            confetti.className = 'confetti';
-            confetti.style.left = Math.random() * 100 + '%';
-            confetti.style.animationDelay = Math.random() * 2 + 's';
-            confetti.style.background = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B9D', '#4ECDC4'][Math.floor(Math.random() * 5)];
-            document.body.appendChild(confetti);
-            setTimeout(() => confetti.remove(), 4000);
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + '%';
+            c.style.animationDelay = Math.random() * 2 + 's';
+            c.style.background = colors[Math.floor(Math.random() * colors.length)];
+            document.body.appendChild(c);
+            setTimeout(() => c.remove(), 4000);
         }
-    }
-
-    showWeeklyCelebration() {
-        setTimeout(() => {
-            for (let i = 0; i < 30; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.textContent = '⭐';
-                sparkle.style.cssText = 'position:fixed;left:' + (Math.random() * 100) + '%;top:50%;font-size:2rem;z-index:1001;animation:confetti 2s ease-out forwards;pointer-events:none';
-                document.body.appendChild(sparkle);
-                setTimeout(() => sparkle.remove(), 2000);
-            }
-        }, 500);
-    }
-
-    showMilestoneMessage(message) {
-        const notification = document.createElement('div');
-        notification.textContent = message;
-        notification.style.cssText = 'position:fixed;top:20%;left:50%;transform:translateX(-50%);background:linear-gradient(45deg,#FF6B9D,#4ECDC4);color:white;padding:15px 25px;border-radius:25px;font-weight:bold;font-size:1.1rem;z-index:1001;box-shadow:0 4px 15px rgba(0,0,0,0.3);animation:modalAppear 0.5s ease-out';
-        document.body.appendChild(notification);
-        setTimeout(() => {
-            notification.style.animation = 'sparkle 0.5s ease-in';
-            setTimeout(() => notification.remove(), 500);
-        }, 2000);
     }
 
     showOverallCelebration() {
-        setTimeout(() => {
-            for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.animationDelay = Math.random() * 3 + 's';
-                confetti.style.background = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#FF1493', '#00CED1'][Math.floor(Math.random() * 5)];
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 6000);
-            }
-        }, 300);
+        setTimeout(() => { for (let i = 0; i < 60; i++) { const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + '%'; c.style.animationDelay = Math.random() * 3 + 's'; document.body.appendChild(c); setTimeout(() => c.remove(), 6000); } }, 300);
     }
 
-    async showWelcomeMessage() {
-        const hasVisited = await Storage.get('hasVisited');
-        if (!hasVisited) {
-            setTimeout(async () => {
-                alert("Welcome to Mindi's Cleaning Adventures! 🎉\n\nStart by checking out 'This Week's Tasks' or browse all rooms in the 'All Rooms' tab.\n\nTip: Go to Settings to sync between iPhone and iPad!");
-                await Storage.set('hasVisited', true);
-            }, 1000);
-        }
-    }
-
-    // ---- Haptics ----
-    // (handled by Haptics global; called from toggleTaskCompletion)
-
-    // ---- Time-of-day gradient ----
-    applyTimeOfDay() {
-        const h = new Date().getHours();
-        let cls = 'time-midday';
-        if (h >= 5 && h < 11) cls = 'time-morning';
-        else if (h >= 11 && h < 17) cls = 'time-midday';
-        else if (h >= 17 && h < 21) cls = 'time-evening';
-        else cls = 'time-night';
-        document.body.classList.remove('time-morning', 'time-midday', 'time-evening', 'time-night');
-        document.body.classList.add(cls);
-        const themeColor = cls === 'time-night' ? '#0F2027' : cls === 'time-evening' ? '#614385' : cls === 'time-morning' ? '#FFB6C1' : '#667EEA';
-        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
-    }
-
-    // ---- Avatar ----
-    updateAvatar() {
-        const avatar = document.getElementById('mindiAvatar');
-        if (!avatar) return;
-        const totalComplete = Object.keys(this.completedTasks).length;
-        const today = new Date().toDateString();
-        const completedToday = Object.values(this.completedTasks).filter(v => {
-            const ts = typeof v === 'string' ? v : v.completedAt;
-            return new Date(ts).toDateString() === today;
-        }).length;
-
-        if (completedToday >= 5) avatar.textContent = '🤩';
-        else if (completedToday > 0) avatar.textContent = '😊';
-        else if (totalComplete === 0) avatar.textContent = '🧹';
-        else avatar.textContent = '🙂';
-    }
-
-    flashAvatar() {
-        const avatar = document.getElementById('mindiAvatar');
-        if (!avatar) return;
-        avatar.classList.remove('celebrate');
-        void avatar.offsetWidth;
-        avatar.classList.add('celebrate');
-        setTimeout(() => avatar.classList.remove('celebrate'), 800);
-    }
-
-    startAvatarWatcher() {
-        // Sleepy avatar if no activity in 3 days
-        setInterval(() => {
-            const all = Object.values(this.completedTasks).map(v => typeof v === 'string' ? Date.parse(v) : (v.completedAt || 0));
-            const latest = all.length ? Math.max(...all) : 0;
-            const daysSince = (Date.now() - latest) / (1000 * 60 * 60 * 24);
-            const avatar = document.getElementById('mindiAvatar');
-            if (!avatar) return;
-            if (daysSince > 3 && !avatar.classList.contains('celebrate')) {
-                avatar.classList.add('sleep');
-                avatar.textContent = '😴';
-            } else {
-                avatar.classList.remove('sleep');
-            }
-        }, 60 * 1000);
-    }
-
-    // ---- Streak ----
-    updateStreakBadge() {
-        const badge = document.getElementById('streakBadge');
-        const count = document.getElementById('streakCount');
-        if (!badge || !count) return;
-        const c = this.streak?.count || 0;
-        count.textContent = c;
-        badge.style.display = 'inline-flex';
-        badge.classList.toggle('zero', c === 0);
-    }
-
-    bumpStreak() {
-        const week = this.currentWeek;
-        if (this.streak?.lastWeek === week) return;
-        const prevWeek = week - 1;
-        const count = this.streak?.lastWeek === prevWeek ? (this.streak.count || 0) + 1 : 1;
-        this.streak = { count, lastWeek: week };
-        Storage.set('streak', this.streak);
-        this.updateStreakBadge();
-    }
-
-    // ---- Today's mission ----
-    renderMission() {
-        const card = document.getElementById('missionCard');
-        const taskEl = document.getElementById('missionTask');
-        const roomEl = document.getElementById('missionRoom');
-        if (!card) return;
-
-        const candidates = [];
-        Object.keys(this.tasks).forEach(room => {
-            const data = this.tasks[room];
-            data.tasks.forEach(task => {
-                if (task.startsWith('---') && task.endsWith('---')) return;
-                const id = `${room}-${task}`;
-                if (this.isTaskCompleted(id)) return;
-                const completedAt = this.completedTasks[id];
-                const lastDone = completedAt ? Date.parse(completedAt) : 0;
-                candidates.push({ room, task, id, lastDone });
-            });
-        });
-
-        if (candidates.length === 0) {
-            card.style.display = 'none';
-            return;
-        }
-
-        candidates.sort((a, b) => a.lastDone - b.lastDone);
-        const mission = candidates[0];
-        card.style.display = 'block';
-        taskEl.textContent = mission.task;
-        roomEl.textContent = `in ${mission.room}`;
-        this._currentMission = mission;
-    }
-
-    openMission() {
-        if (!this._currentMission) return;
-        this.switchTab('rooms');
-        setTimeout(() => {
-            const el = document.querySelector(`[data-task-id="${CSS.escape(this._currentMission.id)}"]`);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.style.transition = 'box-shadow 0.4s ease';
-                el.style.boxShadow = '0 0 0 4px #FFE66D';
-                setTimeout(() => el.style.boxShadow = '', 1800);
-            }
-        }, 300);
-    }
-
-    // ---- Weather ----
-    async loadWeather() {
-        const widget = document.getElementById('weatherWidget');
-        if (!widget) return;
-        if (!navigator.geolocation) { widget.style.display = 'none'; return; }
-
-        const cached = await Storage.get('weatherCache');
-        if (cached && Date.now() - cached.at < 30 * 60 * 1000) {
-            this.renderWeather(cached);
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            try {
-                const { latitude, longitude } = pos.coords;
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
-                const res = await fetch(url);
-                const data = await res.json();
-                const cache = {
-                    at: Date.now(),
-                    temp: Math.round(data.current.temperature_2m),
-                    code: data.current.weather_code,
-                };
-                await Storage.set('weatherCache', cache);
-                this.renderWeather(cache);
-            } catch {
-                widget.style.display = 'none';
-            }
-        }, () => { widget.style.display = 'none'; },
-            { timeout: 8000, maximumAge: 10 * 60 * 1000 });
-    }
-
-    renderWeather(w) {
-        const widget = document.getElementById('weatherWidget');
-        const icon = document.getElementById('weatherIcon');
-        const text = document.getElementById('weatherText');
-        const tip = document.getElementById('weatherTip');
-        const { emoji, label, suggestion } = this.weatherInfo(w.code);
-        icon.textContent = emoji;
-        text.textContent = `${w.temp}°C, ${label}`;
-        tip.textContent = `— ${suggestion}`;
-        widget.style.display = 'flex';
-    }
-
-    weatherInfo(code) {
-        if (code === 0) return { emoji: '☀️', label: 'Clear', suggestion: 'Sunny day — maybe tackle the deck today?' };
-        if (code <= 3) return { emoji: '⛅', label: 'Partly cloudy', suggestion: 'Nice day for any task!' };
-        if (code >= 45 && code <= 48) return { emoji: '🌫️', label: 'Foggy', suggestion: 'Cozy inside day — perfect for dusting.' };
-        if (code >= 51 && code <= 67) return { emoji: '🌧️', label: 'Rainy', suggestion: 'Rainy — perfect time to clean inside today!' };
-        if (code >= 71 && code <= 77) return { emoji: '❄️', label: 'Snowy', suggestion: 'Stay warm — focus on indoor rooms.' };
-        if (code >= 80 && code <= 82) return { emoji: '🌧️', label: 'Showers', suggestion: 'Showers outside — great time to clean inside.' };
-        if (code >= 95) return { emoji: '⛈️', label: 'Stormy', suggestion: 'Stormy — perfect excuse to tackle the kitchen.' };
-        return { emoji: '🌤️', label: 'Mild', suggestion: 'A great day to make progress.' };
-    }
-
-    // ---- High-five ----
-    maybeFireHighFive(taskId) {
-        if (!this.syncClient?.householdCode) return;
-        const room = this.detectRoomFromTaskId(taskId);
-        const task = taskId.startsWith('bait-') ? 'Change baits' : taskId.slice(room.length + 1);
-        this.highFives = this.highFives || [];
-        this.highFives.push({
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            taskId,
-            room,
-            task,
-            at: Date.now(),
-            by: this.deviceName(),
-        });
-        if (this.highFives.length > 20) this.highFives = this.highFives.slice(-20);
-        Storage.set('highFives', this.highFives);
-    }
-
-    deviceName() {
-        if (/iPad/.test(navigator.userAgent)) return 'iPad';
-        if (/iPhone/.test(navigator.userAgent)) return 'iPhone';
-        return 'This device';
-    }
-
-    checkIncomingHighFives(remoteState) {
-        const remote = remoteState?.highFives || [];
-        const seen = new Set(this.highFivesSeen);
-        const myIds = new Set((this.highFives || []).map(h => h.id));
-        const newOnes = remote.filter(h => !seen.has(h.id) && !myIds.has(h.id));
-        newOnes.forEach(h => {
-            this.showHighFiveToast(h);
-            this.highFivesSeen.push(h.id);
-        });
-        if (newOnes.length) {
-            this.highFivesSeen = this.highFivesSeen.slice(-50);
-            Storage.set('highFivesSeen', this.highFivesSeen);
-        }
-    }
-
-    showHighFiveToast(highFive) {
-        let toast = document.querySelector('.highfive-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.className = 'highfive-toast';
-            document.body.appendChild(toast);
-        }
-        toast.innerHTML = `<span class="hf-emoji">👋</span>${highFive.by} just did <strong>${highFive.task}</strong> in ${highFive.room}!`;
-        toast.classList.add('show');
-        Haptics.medium();
-        clearTimeout(this._hfTimer);
-        this._hfTimer = setTimeout(() => toast.classList.remove('show'), 4000);
-    }
-
-    // ---- Themed celebration scenes ----
     maybeFireCelebrationScene(taskId) {
         const room = this.detectRoomFromTaskId(taskId);
         if (!room) return;
-        const theme = this.celebrationThemeForRoom(room);
-        if (theme === 'confetti') return; // default confetti already fires elsewhere
-        if (theme === 'bubbles') this.spawnBubbles(15);
-        else if (theme === 'leaves') this.spawnLeaves(12);
-        else if (theme === 'sparkles') this.spawnSparkles(20);
-    }
-
-    celebrationThemeForRoom(room) {
         const r = room.toLowerCase();
-        if (r.includes('bath') || r.includes('toilet') || r.includes('ensuite')) return 'bubbles';
-        if (r.includes('outside') || r.includes('deck') || r.includes('courtyard') || r.includes('entry')) return 'leaves';
-        if (r.includes('kitchen') || r.includes('dining') || r.includes('sewing')) return 'sparkles';
-        return 'confetti';
+        if (r.includes('bath') || r.includes('toilet') || r.includes('ensuite')) this.spawnBubbles(15);
+        else if (r.includes('outside') || r.includes('deck') || r.includes('courtyard') || r.includes('entry')) this.spawnLeaves(12);
+        else if (r.includes('kitchen') || r.includes('dining') || r.includes('sewing')) this.spawnSparkles(20);
     }
 
     spawnBubbles(n) {
         for (let i = 0; i < n; i++) {
             const b = document.createElement('div');
             b.className = 'scene-particle scene-bubble';
-            const size = 12 + Math.random() * 28;
-            b.style.width = b.style.height = size + 'px';
-            b.style.left = (Math.random() * 100) + '%';
-            b.style.animationDelay = (Math.random() * 0.8) + 's';
+            const sz = 12 + Math.random() * 28;
+            b.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random() * 100}%;animation-delay:${Math.random() * 0.8}s`;
             document.body.appendChild(b);
             setTimeout(() => b.remove(), 4500);
         }
     }
 
     spawnLeaves(n) {
-        const leaves = ['🍃', '🌿', '🍂'];
+        const leaves = ['\u{1F343}', '\u{1F33F}', '\u{1F342}'];
         for (let i = 0; i < n; i++) {
             const l = document.createElement('div');
             l.className = 'scene-particle scene-leaf';
             l.textContent = leaves[Math.floor(Math.random() * leaves.length)];
-            l.style.left = (Math.random() * 100) + '%';
-            l.style.animationDelay = (Math.random() * 1.2) + 's';
+            l.style.cssText = `left:${Math.random() * 100}%;animation-delay:${Math.random() * 1.2}s`;
             document.body.appendChild(l);
             setTimeout(() => l.remove(), 5500);
         }
     }
 
     spawnSparkles(n) {
-        const sparkles = ['✨', '⭐', '💫', '🌟'];
+        const sp = ['\u2728', '\u2B50', '\u{1F4AB}', '\u{1F31F}'];
         for (let i = 0; i < n; i++) {
             const s = document.createElement('div');
             s.className = 'scene-particle scene-sparkle';
-            s.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
-            s.style.left = (Math.random() * 100) + '%';
-            s.style.top = (40 + Math.random() * 30) + '%';
-            s.style.animationDelay = (Math.random() * 0.5) + 's';
+            s.textContent = sp[Math.floor(Math.random() * sp.length)];
+            s.style.cssText = `left:${Math.random() * 100}%;top:${40 + Math.random() * 30}%;animation-delay:${Math.random() * 0.5}s`;
             document.body.appendChild(s);
             setTimeout(() => s.remove(), 3000);
         }
     }
 
-    // ---- Notifications ----
-    async setupNotifications() {
-        const banner = document.getElementById('notifPermissionBanner');
-        const status = document.getElementById('notifStatus');
-        if (!('Notification' in window)) {
-            banner.style.display = 'none';
-            status.textContent = 'Notifications not supported on this device.';
-            return;
-        }
-        if (Notification.permission === 'granted') {
-            banner.style.display = 'none';
-            status.textContent = 'Notifications enabled. Monthly recaps will appear automatically.';
-        } else if (Notification.permission === 'denied') {
-            banner.style.display = 'none';
-            status.textContent = 'Notifications blocked. Enable in Settings to get monthly recaps.';
-        } else {
-            banner.style.display = 'block';
-            status.textContent = '';
+    async showWelcomeMessage() {
+        if (!(await Storage.get('hasVisited'))) {
+            setTimeout(async () => {
+                alert("Welcome to Mindi's Cleaning Adventures!\n\nStart with This Week's Tasks or browse All Rooms.\n\nCheck Settings for themes, achievements, and the cleaning timer!");
+                await Storage.set('hasVisited', true);
+            }, 1000);
         }
     }
 
+    setupIosInstallHint() {
+        const hint = document.getElementById('iosInstallHint');
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        Storage.get('installHintDismissed').then(d => { if (isIos && !standalone && !d) hint.classList.add('visible'); });
+        document.getElementById('dismissInstallHint').addEventListener('click', () => { hint.classList.remove('visible'); Storage.set('installHintDismissed', true); });
+    }
+
+    async setupNotifications() {
+        const banner = document.getElementById('notifPermissionBanner');
+        const status = document.getElementById('notifStatus');
+        if (!('Notification' in window)) { banner.style.display = 'none'; status.textContent = 'Notifications not supported.'; return; }
+        if (Notification.permission === 'granted') { banner.style.display = 'none'; status.textContent = 'Notifications enabled. Monthly recaps appear automatically.'; }
+        else if (Notification.permission === 'denied') { banner.style.display = 'none'; status.textContent = 'Notifications blocked in device settings.'; }
+        else banner.style.display = 'block';
+    }
+
     async enableNotifications() {
-        if (!('Notification' in window)) return;
         const perm = await Notification.requestPermission();
         this.setupNotifications();
         if (perm === 'granted') this.sendTestNotification();
     }
 
     sendTestNotification() {
-        if (!('Notification' in window) || Notification.permission !== 'granted') {
-            alert('Enable notifications first using the Enable button.');
-            return;
-        }
-        const title = "Mindi's Cleaning 🧹";
+        if (!('Notification' in window) || Notification.permission !== 'granted') { alert('Enable notifications first.'); return; }
+        const title = "Mindi's Cleaning";
         const body = "Notifications are working! You'll get a monthly recap on the 1st.";
-        try {
-            navigator.serviceWorker?.ready.then(reg => {
-                reg.showNotification(title, {
-                    body,
-                    icon: 'icon-192.png',
-                    badge: 'icon-192.png',
-                });
-            }).catch(() => {
-                new Notification(title, { body });
-            });
-        } catch {
-            new Notification(title, { body });
-        }
+        navigator.serviceWorker?.ready.then(reg => reg.showNotification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png' })).catch(() => new Notification(title, { body }));
     }
 
     async maybeShowMonthlyRecap() {
         const now = new Date();
         const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
         if (this.lastRecapMonth === monthKey) return;
-        if (now.getDate() < 1) return;
-        // Show on first launch of a new month (any day)
         const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const monthName = prev.toLocaleString('default', { month: 'long' });
-        const counts = this.computeMonthlyStats(prev);
-        if (counts.total === 0) return;
-
+        const stats = this.computeMonthlyStats(prev);
+        if (stats.total === 0) return;
         await Storage.set('lastRecapMonth', monthKey);
         this.lastRecapMonth = monthKey;
-
-        if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker?.controller) {
-            navigator.serviceWorker?.ready.then(reg => {
-                reg.showNotification(`Monthly recap: ${monthName} 🌟`, {
-                    body: `You completed ${counts.total} tasks across ${counts.rooms} rooms! Tap to view more.`,
-                    icon: 'icon-192.png',
-                    badge: 'icon-192.png',
-                });
-            });
+        const monthName = prev.toLocaleString('default', { month: 'long' });
+        if ('Notification' in window && Notification.permission === 'granted') {
+            navigator.serviceWorker?.ready.then(reg => reg.showNotification(`Monthly recap: ${monthName}`, { body: `You completed ${stats.total} tasks across ${stats.rooms} rooms!`, icon: 'icon-192.png' }));
         }
-        // Also show in-app recap once per month
-        setTimeout(() => this.showMonthlyRecap(false, monthName, counts), 2000);
+        setTimeout(() => this.showMonthlyRecap(false, monthName, stats), 2000);
     }
 
     computeMonthlyStats(monthDate) {
@@ -2473,117 +1556,84 @@ class CleaningApp {
         const rooms = new Set();
         let total = 0;
         Object.entries(this.completedTasks).forEach(([id, v]) => {
-            const ts = typeof v === 'string' ? Date.parse(v) : (v.completedAt || 0);
+            const ts = Date.parse(v);
             if (ts >= start && ts < end) {
                 total++;
                 if (id.startsWith('bait-')) rooms.add(id.slice(5));
-                else {
-                    for (const room of Object.keys(this.tasks)) {
-                        if (id.startsWith(`${room}-`)) { rooms.add(room); break; }
-                    }
-                }
+                else for (const room of Object.keys(this.tasks)) { if (id.startsWith(`${room}-`)) { rooms.add(room); break; } }
             }
         });
         return { total, rooms: rooms.size };
     }
 
     showMonthlyRecap(force, monthName, counts) {
-        const prev = new Date();
-        prev.setMonth(prev.getMonth() - 1);
+        const prev = new Date(); prev.setMonth(prev.getMonth() - 1);
         const name = monthName || prev.toLocaleString('default', { month: 'long' });
         const stats = counts || this.computeMonthlyStats(prev);
-        const modal = document.getElementById('congratsModal');
-        const content = document.getElementById('congratsContent');
-        content.innerHTML = `
-            <h2>📜 ${name} Recap</h2>
-            <p style="font-size: 1.2rem; margin: 15px 0;">You completed <strong>${stats.total}</strong> cleaning tasks across <strong>${stats.rooms}</strong> rooms! 🎉</p>
-            <div style="font-size: 3.5rem; margin: 20px 0;">🌟🧹✨</div>
-            <p style="font-weight: bold; color: var(--primary);">${stats.total >= 30 ? 'Outstanding month!' : stats.total >= 15 ? 'Great month!' : 'Every task counts!'}</p>
-        `;
-        modal.style.display = 'block';
+        document.getElementById('congratsContent').innerHTML = `<h2>${name} Recap</h2><p style="font-size:1.2rem;margin:15px 0">You completed <strong>${stats.total}</strong> tasks across <strong>${stats.rooms}</strong> rooms!</p><div style="font-size:3.5rem;margin:20px 0">&#127775;&#129529;&#10024;</div><p style="font-weight:bold;color:var(--primary)">${stats.total >= 30 ? 'Outstanding month!' : stats.total >= 15 ? 'Great month!' : 'Every task counts!'}</p>`;
+        document.getElementById('congratsModal').classList.add('open');
         if (force) this.spawnSparkles(20);
     }
 
-    // ---- Pull-to-refresh ----
     setupPullToRefresh() {
         const container = document.querySelector('.pull-container');
         const indicator = document.getElementById('pullIndicator');
         if (!container || !indicator) return;
-
-        let startY = 0;
-        let pulling = false;
-        let currentDelta = 0;
+        let startY = 0, pulling = false, delta = 0;
         const threshold = 70;
-
-        container.addEventListener('touchstart', (e) => {
-            if (window.scrollY > 0) return;
-            startY = e.touches[0].clientY;
-            pulling = true;
-        }, { passive: true });
-
+        container.addEventListener('touchstart', (e) => { if (window.scrollY > 0) return; startY = e.touches[0].clientY; pulling = true; }, { passive: true });
         container.addEventListener('touchmove', (e) => {
             if (!pulling) return;
-            currentDelta = Math.max(0, e.touches[0].clientY - startY);
-            if (currentDelta > 0) {
-                indicator.style.height = Math.min(60, currentDelta) + 'px';
+            delta = Math.max(0, e.touches[0].clientY - startY);
+            if (delta > 0) {
+                indicator.style.height = Math.min(60, delta) + 'px';
                 indicator.classList.add('visible');
-                indicator.classList.toggle('ready', currentDelta >= threshold);
-                indicator.textContent = currentDelta >= threshold ? 'Release to refresh' : 'Pull down to refresh';
+                indicator.classList.toggle('ready', delta >= threshold);
+                indicator.textContent = delta >= threshold ? 'Release to refresh' : 'Pull down to refresh weekly tasks';
             }
         }, { passive: true });
-
         const finish = () => {
             if (!pulling) return;
             pulling = false;
-            const wasReady = currentDelta >= threshold;
+            const ready = delta >= threshold;
             indicator.style.height = '0';
             indicator.classList.remove('visible', 'ready');
-            currentDelta = 0;
-            if (wasReady) {
+            delta = 0;
+            if (ready) {
                 indicator.textContent = 'Refreshing...';
                 indicator.style.height = '30px';
                 indicator.classList.add('visible');
                 Haptics.light();
-                setTimeout(async () => {
-                    if (this.syncClient?.householdCode) {
-                        await this.syncClient.sync();
-                    }
+                setTimeout(() => {
                     this.renderWeeklyTasks();
                     this.renderMission();
+                    this.updateWeeklyProgress();
                     indicator.style.height = '0';
                     indicator.classList.remove('visible');
                 }, 600);
             }
         };
-
         container.addEventListener('touchend', finish);
         container.addEventListener('touchcancel', finish);
     }
 }
 
 let cleaningApp;
-
 document.addEventListener('DOMContentLoaded', async () => {
     await Storage.init();
     cleaningApp = new CleaningApp();
     await cleaningApp.init();
     window.cleaningApp = cleaningApp;
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch((err) => console.warn('SW registration failed:', err));
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
 });
 
 document.addEventListener('click', (e) => {
     const check = e.target.closest('.task-check');
-    if (check) {
-        const taskItem = check.closest('.task-item');
-        const taskId = taskItem?.dataset?.taskId;
-        if (taskId && window.cleaningApp) {
-            window.cleaningApp.toggleTaskCompletion(taskId);
-        }
-    }
+    if (!check) return;
+    const item = check.closest('.task-item');
+    const taskId = item?.dataset?.taskId;
+    if (taskId && window.cleaningApp) window.cleaningApp.toggleTaskCompletion(taskId);
 });
-    </script>
+</script>
 </body>
 </html>

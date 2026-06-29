@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindi-cleaning-v2';
+const CACHE_NAME = 'mindi-cleaning-v3';
 const PRECACHE_URLS = [
   './',
   './index.html',
