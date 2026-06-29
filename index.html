@@ -216,6 +216,19 @@ main {
 .action-btn.danger { background: linear-gradient(45deg, var(--warning), #FF6B6B); }
 .settings-section { margin-bottom: 24px; padding: 20px; background: #F8F9FA; border-radius: 10px; }
 .settings-section h3 { margin-bottom: 12px; }
+.manage-hint { font-size: 0.9rem; color: var(--text-secondary); margin: 16px 0 8px; line-height: 1.5; }
+.manage-divider { height: 1px; background: #dee2e6; margin: 20px 0; }
+.manage-form-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.manage-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.manage-form-row select,
+.manage-form-row input[type="text"],
+.manage-form-row input[type="number"] {
+    width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 10px;
+    border: 2px solid #ddd; font-size: 1rem; background: white; color: var(--text-primary);
+}
+.manage-form-row select:focus,
+.manage-form-row input:focus { outline: none; border-color: var(--primary); }
+.manage-form-row .action-btn { align-self: flex-start; min-height: 44px; }
 .theme-swatches { display: flex; gap: 12px; flex-wrap: wrap; }
 .theme-swatch {
     width: 56px; height: 56px; border-radius: 14px; border: 3px solid transparent;
@@ -438,6 +451,41 @@ body.time-night .task-item.completed .task-text { color: #95a5a6; }
                 <h3>Manage Tasks</h3>
                 <button id="addRoom" class="action-btn">Add New Room/Area</button>
                 <div id="taskEditor" class="task-editor"></div>
+                <div id="manageTasksPanel">
+                    <p class="manage-hint">You can also edit or delete individual tasks from the <strong>All Rooms</strong> tab.</p>
+                    <div class="manage-divider"></div>
+                    <div class="manage-form-row">
+                        <span class="manage-label">Add task to a room</span>
+                        <select id="addTaskRoom" class="manage-room-select" aria-label="Room for new task"></select>
+                        <input type="text" id="addTaskText" placeholder="Task name" autocomplete="off">
+                        <button type="button" id="addTaskBtn" class="action-btn">Add Task</button>
+                    </div>
+                    <div class="manage-form-row">
+                        <span class="manage-label">Add section subheading</span>
+                        <select id="addSubheadingRoom" class="manage-room-select" aria-label="Room for subheading"></select>
+                        <input type="text" id="addSubheadingText" placeholder="Section name (e.g. Walk in robe)" autocomplete="off">
+                        <button type="button" id="addSubheadingBtn" class="action-btn">Add Subheading</button>
+                    </div>
+                    <div class="manage-divider"></div>
+                    <div class="manage-form-row">
+                        <span class="manage-label">Rename a room</span>
+                        <select id="renameRoomSelect" class="manage-room-select" aria-label="Room to rename"></select>
+                        <input type="text" id="renameRoomText" placeholder="New room name" autocomplete="off">
+                        <button type="button" id="renameRoomBtn" class="action-btn">Rename Room</button>
+                    </div>
+                    <div class="manage-form-row">
+                        <span class="manage-label">Set bait count</span>
+                        <select id="baitsRoomSelect" class="manage-room-select" aria-label="Room for bait count"></select>
+                        <input type="number" id="baitsCountInput" min="0" placeholder="Number of baits (0 = none)" value="0">
+                        <button type="button" id="updateBaitsBtn" class="action-btn">Update Baits</button>
+                    </div>
+                    <div class="manage-divider"></div>
+                    <div class="manage-form-row">
+                        <span class="manage-label">Delete a room</span>
+                        <select id="deleteRoomSelect" class="manage-room-select" aria-label="Room to delete"></select>
+                        <button type="button" id="deleteRoomBtn" class="action-btn danger">Delete Room</button>
+                    </div>
+                </div>
             </div>
             <div class="settings-section">
                 <h3>Theme</h3>
@@ -826,6 +874,7 @@ class CleaningApp {
         this.setupNotifications();
         this.setupPullToRefresh();
         this.maybeShowMonthlyRecap();
+        this.renderManageTasksForms();
         requestAnimationFrame(() => this.updateTabIndicator());
         if (this.theme === 'auto') {
             setInterval(() => this.applyTimeOfDay(), 60000);
@@ -905,6 +954,7 @@ class CleaningApp {
         document.getElementById('refreshWeekly').addEventListener('click', () => this.refreshWeeklyTasks());
         document.getElementById('resetBaits').addEventListener('click', () => this.resetBaitsProgress());
         document.getElementById('addRoom').addEventListener('click', () => this.showAddRoomForm());
+        this.setupManageTasksForms();
         document.getElementById('resetWeek').addEventListener('click', () => this.resetWeeklyProgress());
         document.getElementById('resetAll').addEventListener('click', () => this.resetAllProgress());
         document.getElementById('exportData').addEventListener('click', () => this.exportData());
@@ -1274,6 +1324,65 @@ class CleaningApp {
         }, 300);
     }
 
+    populateRoomSelects() {
+        const rooms = Object.keys(this.tasks);
+        document.querySelectorAll('.manage-room-select').forEach(select => {
+            const current = select.value;
+            select.innerHTML = rooms.length
+                ? rooms.map(r => `<option value="${r.replace(/"/g, '&quot;')}">${r}</option>`).join('')
+                : '<option value="">No rooms yet</option>';
+            if (current && rooms.includes(current)) select.value = current;
+        });
+        const baitsInput = document.getElementById('baitsCountInput');
+        const baitsRoom = document.getElementById('baitsRoomSelect');
+        if (baitsInput && baitsRoom?.value && this.tasks[baitsRoom.value]) {
+            baitsInput.value = this.tasks[baitsRoom.value].baits ?? 0;
+        }
+    }
+
+    setupManageTasksForms() {
+        document.getElementById('addTaskBtn').addEventListener('click', () => {
+            const room = document.getElementById('addTaskRoom').value;
+            const text = document.getElementById('addTaskText').value;
+            if (this.addTaskToRoom(room, text)) {
+                document.getElementById('addTaskText').value = '';
+            }
+        });
+        document.getElementById('addSubheadingBtn').addEventListener('click', () => {
+            const room = document.getElementById('addSubheadingRoom').value;
+            const text = document.getElementById('addSubheadingText').value;
+            if (this.addSubheadingToRoom(room, text)) {
+                document.getElementById('addSubheadingText').value = '';
+            }
+        });
+        document.getElementById('renameRoomBtn').addEventListener('click', () => {
+            const room = document.getElementById('renameRoomSelect').value;
+            const newName = document.getElementById('renameRoomText').value;
+            if (this.editRoomName(room, newName)) {
+                document.getElementById('renameRoomText').value = '';
+                this.renderManageTasksForms();
+            }
+        });
+        document.getElementById('updateBaitsBtn').addEventListener('click', () => {
+            const room = document.getElementById('baitsRoomSelect').value;
+            const count = parseInt(document.getElementById('baitsCountInput').value, 10);
+            if (this.editBaits(room, count)) this.renderManageTasksForms();
+        });
+        document.getElementById('deleteRoomBtn').addEventListener('click', () => {
+            const room = document.getElementById('deleteRoomSelect').value;
+            if (this.deleteRoom(room)) this.renderManageTasksForms();
+        });
+        document.getElementById('baitsRoomSelect').addEventListener('change', () => {
+            const room = document.getElementById('baitsRoomSelect').value;
+            const input = document.getElementById('baitsCountInput');
+            if (room && this.tasks[room]) input.value = this.tasks[room].baits ?? 0;
+        });
+    }
+
+    renderManageTasksForms() {
+        this.populateRoomSelects();
+    }
+
     showAddRoomForm() {
         const editor = document.getElementById('taskEditor');
         editor.innerHTML = `<h4>Add New Room/Area</h4><input type="text" id="newRoomName" placeholder="Room name" style="width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ddd"><input type="number" id="newRoomBaits" placeholder="Number of baits (0 if none)" min="0" style="width:100%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ddd"><button id="saveRoom" class="action-btn">Save Room</button>`;
@@ -1285,6 +1394,7 @@ class CleaningApp {
                 this.persistAll();
                 this.renderRooms();
                 this.renderBaits();
+                this.renderManageTasksForms();
                 editor.innerHTML = '';
             }
         });
@@ -1320,6 +1430,7 @@ class CleaningApp {
         this.persistAll();
         this.renderRooms();
         this.renderWeeklyTasks();
+        this.renderMission();
     }
 
     deleteTask(room, task) {
@@ -1333,21 +1444,56 @@ class CleaningApp {
         this.renderRooms();
         this.renderWeeklyTasks();
         this.renderBaits();
+        this.renderMission();
     }
 
-    addTaskToRoom(room) {
-        const t = prompt('Add new task:');
-        if (!t?.trim()) return;
-        this.tasks[room].tasks.push(t.trim());
+    addTaskToRoom(room, taskText) {
+        if (!room || !this.tasks[room]) {
+            if (!room) alert('Please select a room.');
+            return false;
+        }
+        let text = taskText;
+        if (text === undefined || text === null) {
+            text = prompt('Add new task:');
+        }
+        if (!text?.trim()) return false;
+        this.tasks[room].tasks.push(text.trim());
         this.persistAll();
         this.renderRooms();
+        this.renderMission();
+        return true;
     }
 
-    editRoomName(oldName) {
-        const newName = prompt('Rename room to:', oldName);
-        if (!newName || newName.trim() === oldName) return;
+    addSubheadingToRoom(room, sectionText) {
+        if (!room || !this.tasks[room]) {
+            alert('Please select a room.');
+            return false;
+        }
+        const trimmed = (sectionText || '').trim();
+        if (!trimmed) {
+            alert('Please enter a section name.');
+            return false;
+        }
+        const formatted = trimmed.startsWith('---') && trimmed.endsWith('---')
+            ? trimmed
+            : `--- ${trimmed.replace(/^---\s*|\s*---$/g, '')} ---`;
+        this.tasks[room].tasks.push(formatted);
+        this.persistAll();
+        this.renderRooms();
+        return true;
+    }
+
+    editRoomName(oldName, newNameOptional) {
+        let newName = newNameOptional;
+        if (newName === undefined || newName === null) {
+            newName = prompt('Rename room to:', oldName);
+        }
+        if (!newName || newName.trim() === oldName) return false;
         const trimmed = newName.trim();
-        if (this.tasks[trimmed]) { alert('A room with this name already exists!'); return; }
+        if (this.tasks[trimmed]) {
+            alert('A room with this name already exists!');
+            return false;
+        }
         this.tasks[trimmed] = this.tasks[oldName];
         delete this.tasks[oldName];
         const updated = {};
@@ -1355,25 +1501,60 @@ class CleaningApp {
             updated[id.startsWith(`${oldName}-`) ? id.replace(`${oldName}-`, `${trimmed}-`) : id] = this.completedTasks[id];
         });
         this.completedTasks = updated;
+        if (this.completedTasks[`bait-${oldName}`]) {
+            this.completedTasks[`bait-${trimmed}`] = this.completedTasks[`bait-${oldName}`];
+            delete this.completedTasks[`bait-${oldName}`];
+        }
         this.weeklyTasks.forEach(wt => {
-            if (wt.room === oldName) { wt.room = trimmed; wt.id = `${trimmed}-${wt.task.replace(/\s+/g, '-').toLowerCase()}`; }
+            if (wt.room === oldName) {
+                wt.room = trimmed;
+                wt.id = `${trimmed}-${wt.task.replace(/\s+/g, '-').toLowerCase()}`;
+            }
         });
         this.persistAll();
         this.renderRooms();
         this.renderWeeklyTasks();
         this.renderBaits();
         this.updateOverallProgress();
+        return true;
     }
 
-    editBaits(room) {
-        const count = parseInt(prompt(`Number of baits in ${room}:`, this.tasks[room].baits));
-        if (isNaN(count) || count < 0) return;
+    editBaits(room, countOptional) {
+        if (!room || !this.tasks[room]) return false;
+        let count = countOptional;
+        if (count === undefined || count === null || isNaN(count)) {
+            count = parseInt(prompt(`Number of baits in ${room}:`, this.tasks[room].baits), 10);
+        }
+        if (isNaN(count) || count < 0) return false;
         if (count === 0) delete this.completedTasks[`bait-${room}`];
         this.tasks[room].baits = count;
         this.persistAll();
         this.renderRooms();
         this.renderBaits();
         this.updateOverallProgress();
+        return true;
+    }
+
+    deleteRoom(roomName) {
+        if (!roomName || !this.tasks[roomName]) {
+            alert('Please select a room.');
+            return false;
+        }
+        if (!confirm(`Delete room "${roomName}" and all its tasks? This cannot be undone.`)) return false;
+        const prefix = `${roomName}-`;
+        Object.keys(this.completedTasks).forEach(id => {
+            if (id.startsWith(prefix) || id === `bait-${roomName}`) delete this.completedTasks[id];
+        });
+        this.weeklyTasks = this.weeklyTasks.filter(wt => wt.room !== roomName);
+        delete this.tasks[roomName];
+        this.persistAll();
+        this.renderRooms();
+        this.renderWeeklyTasks();
+        this.renderBaits();
+        this.renderMission();
+        this.updateOverallProgress();
+        this.updateWeeklyProgress();
+        return true;
     }
 
     resetBaitsProgress() {
@@ -1413,6 +1594,7 @@ class CleaningApp {
                 this.renderWeeklyTasks();
                 this.renderBaits();
                 this.renderBadgeGallery();
+                this.renderManageTasksForms();
                 this.updateOverallProgress();
                 this.updateWeeklyProgress();
                 this.updateStreakBadge();
